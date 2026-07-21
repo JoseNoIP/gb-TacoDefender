@@ -227,6 +227,10 @@ version/name="1.0"                    # lo que ve el usuario en Play Store
 **Causa:** `.build_version` ausente o con contenido incorrecto.
 **Solución:** Usar `--install-android-build-template`. Nunca escribir `.build_version` manualmente.
 
+### `Android build template not installed in the project` en un workflow de build de PRUEBA (`--export-debug`)
+**Causa:** `gradle_build/use_gradle_build=true` en `export_presets.cfg` (necesario para el pipeline de AAB) hace que Godot pase por Gradle en **cualquier** export de Android, no solo el release. Si tienes un workflow separado para builds de debug/staging (ej. "subir APK de prueba a Dropbox en cada push"), y solo copiaste el paso simple `godot --export-debug`, sin `--install-android-build-template` ni Java 17, falla con este error.
+**Solución:** Ese workflow necesita los mismos tres pasos que `deploy-playstore.yml`: `actions/setup-java@v4` (Java 17), `--install-android-build-template` en el comando de export, y opcionalmente el pre-heat (`godot --headless --editor --quit || true`).
+
 ### `Android APK requires the *.apk extension`
 **Causa:** Godot 4.7 no exporta directo a `.aab`.
 **Solución:** Exportar a `.apk`. El AAB se produce con `./gradlew bundleRelease`.

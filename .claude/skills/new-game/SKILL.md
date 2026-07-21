@@ -90,6 +90,7 @@ Crear `project.godot` con:
 - Autoloads en orden: Constants → EventBus → GameManager → SaveManager → AudioManager
 - Display/window: 390×844 (portrait), stretch mode: canvas_items, aspect: expand
 - Physics layers nombradas: player(1), enemy(2), projectile(3), item(4), powerup(5)
+- Si el control es táctil (drag/tap con `InputEventScreenTouch`/`Drag`): `[input_devices]` → `pointing/emulate_touch_from_mouse=true` — si no, probar con mouse en el editor de escritorio "no hace nada" y no tira ningún error (regla CLAUDE.md #41).
 
 ---
 
@@ -259,7 +260,7 @@ Reglas UI:
 Conectar todo:
 - Instanciar: Player, EnemySpawner, PowerUpManager, PowerUpDropper, GemSpawner, HeartDropper
 - Instanciar HUD, PauseScreen, GameOverScreen, VictoryScreen, BossWarning
-- Background: ColorRect (o TextureRect si hay assets)
+- Background: ColorRect (o TextureRect si hay assets) — agregarlo como Node2D normal (primer hijo de la escena), **nunca dentro de un CanvasLayer** (regla CLAUDE.md #43: cualquier CanvasLayer se dibuja por encima de los Node2D normales sin importar su `layer`, así que un fondo ahí adentro tapa todo el gameplay sin ningún error).
 - `Game.gd`: conectar restart_requested, game_over, game_won con cambios de escena
 - Auto-pausa: `_notification(NOTIFICATION_APPLICATION_FOCUS_OUT)`
 

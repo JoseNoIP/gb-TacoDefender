@@ -163,16 +163,36 @@ func _on_lang_next_pressed() -> void:
 
 ### 7. Reemplazar todos los strings hardcodeados
 
-En todos los scripts UI:
-```gdscript
-# ANTES
-title.text = "CONFIGURACIÓN"
+Hay DOS formas válidas — elegir según si el nodo se reconstruye o no cuando cambia el idioma:
 
-# DESPUÉS
-title.text = tr(&"TITLE_SETTINGS")
+**A) Overlays que se construyen una sola vez y solo se muestran/ocultan** (`SettingsScreen`,
+`PauseScreen` — el patrón típico de este template, `open()`/`close()` sin rebuild): asignar
+la **KEY cruda**, sin `tr()`, aprovechando el auto-translate nativo de `Control`
+(`auto_translate_mode`, activo por defecto). Godot re-traduce solo cuando cambie
+`TranslationServer.set_locale()`, sin importar cuánto tiempo lleve el nodo ya construido:
+```gdscript
+# Se construye una vez en _ready(); open()/close() solo hacen show()/hide().
+title.text = "TITLE_SETTINGS"          # ← key cruda, NO tr()
+sound_check.text = "SETTINGS_SOUND"     # ← ídem
+```
+Verificado con captura de pantalla real (`get_viewport().get_texture().get_image()` desde
+un script de prueba): cambiar el idioma con el panel ya abierto retradujo el título,
+checkboxes y botones sin volver a llamar `open()` ni reconstruir nada.
+
+**B) Labels que se re-asignan en cada evento/paso** (HUD con score/oleada, tutorial con
+pasos, cualquier valor formateado con `%d`/`%s`): usar `tr(&"KEY")` explícito en el punto
+donde ya se recalcula el texto — no hay beneficio del auto-translate porque el valor
+cambia por razones ajenas al idioma de todos modos:
+```gdscript
+# Se reasigna en cada wave_advanced — el tr() ya corre en el idioma activo en ese momento.
+_wave_label.text = tr(&"LABEL_WAVE") % wave_number
 ```
 
-Usar `&"KEY"` (StringName) — más eficiente que `tr("KEY")` (String) al llamarlo en `_process`.
+**Regla práctica:** si el nodo tiene un `open()`/`show()` que NO reconstruye la UI, usar
+key cruda (A). Si el texto se reasigna en cada actualización de estado, usar `tr()` (B).
+Mezclar ambos estilos en el mismo archivo está bien — comentar cuál se usa y por qué.
+
+Usar `&"KEY"` (StringName) en las llamadas `tr()` — más eficiente que `tr("KEY")` (String).
 
 ---
 
