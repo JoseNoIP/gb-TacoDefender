@@ -79,7 +79,7 @@ Cada mejora tiene 5 niveles. Costo por nivel: **100 / 250 / 500 / 1000 / 2000 Pr
 4. **Clientes Generosos:** $+10\%$ multiplicador de propinas ganadas.
 5. **Barra Blindada:** Vida inicial de la Taquería ($3 \rightarrow 4 \rightarrow 5 \rightarrow 6 \rightarrow 7$).
 
-## 6. Bocetos
+## 6. Bocetos (solo como ejemplo o guía)
 
 1. bocetos/Taco-Defender-ejemplo.png
 2. bocetos/Taco-Defender-Como-Jugar.png
