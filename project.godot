@@ -6,21 +6,19 @@
 ;   [section] ; section goes in []
 ;   param=value ; assign values to parameters
 ;
-; TEMPLATE: Replace all PLACEHOLDER_* values before using.
-
 config_version=5
 
 [application]
 
-config/name="PLACEHOLDER_GAME_NAME"
-config/description="PLACEHOLDER_DESCRIPTION"
+config/name="Taco Defender"
+config/description="Tower defense hipercasual: coloca torres de ingredientes picantes y refrescantes para defender la barra de una taqueria contra oleadas de plagas hambrientas."
 config/version="0.1.0"
-run/main_scene="res://src/scenes/Main.tscn"
+run/main_scene="res://src/scenes/MainMenu.tscn"
 config/quit_on_go_back=false
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://assets/icon.png"
 boot_splash/image="res://assets/splash.png"
-boot_splash/bg_color=Color(0.031, 0.051, 0.031, 1)
+boot_splash/bg_color=Color(0.086, 0.055, 0.035, 1)
 boot_splash/fullsize=false
 boot_splash/use_filter=false
 
@@ -31,13 +29,12 @@ Constants="*res://src/core/Constants.gd"
 EventBus="*res://src/core/EventBus.gd"
 GameManager="*res://src/core/GameManager.gd"
 SaveManager="*res://src/core/SaveManager.gd"
-; Optional — uncomment when implemented:
-; LocalizationManager="*res://src/core/LocalizationManager.gd"
-; AudioManager="*res://src/features/audio/AudioManager.gd"
-; HapticManager="*res://src/features/audio/HapticManager.gd"
-; AchievementManager="*res://src/features/meta/AchievementManager.gd"
-; DailyMissionsManager="*res://src/features/meta/DailyMissionsManager.gd"
-; WeeklyChallengeManager="*res://src/features/meta/WeeklyChallengeManager.gd"
+MetaManager="*res://src/core/MetaManager.gd"
+AudioManager="*res://src/features/audio/AudioManager.gd"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gut/plugin.cfg")
 
 [display]
 
@@ -47,6 +44,13 @@ window/stretch/mode="canvas_items"
 window/stretch/aspect="keep"
 window/handheld/orientation=1
 
+[input_devices]
+
+; Juego 100% táctil (tap para construir/seleccionar, drag para paneo de cámara) — sin
+; esto, Godot no emula touch desde mouse/trackpad y probar en el editor de escritorio
+; "no hace nada" sin ningún error (regla CLAUDE.md #41).
+pointing/emulate_touch_from_mouse=true
+
 [input]
 
 ; Touch input for mobile — add game-specific actions here
@@ -55,15 +59,6 @@ ui_accept={
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":4194309,"physical_keycode":0,"key_label":0,"unicode":32,"location":0,"echo":false,"script":null)
 ]
 }
-
-[layer_names]
-
-; Physics layer naming (matches collision_mask usage in code)
-2d_physics/layer_1="world"
-2d_physics/layer_2="enemies"
-2d_physics/layer_3="player"
-2d_physics/layer_4="projectiles"
-2d_physics/layer_5="pickups"
 
 [rendering]
 

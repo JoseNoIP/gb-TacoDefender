@@ -258,19 +258,66 @@ e) DOC       — Actualizar idea-base.md, CLAUDE.md, memoria y template si aplic
 > Las siguientes secciones están vacías en el template. Rellenarlas al correr `/new-game`.
 
 ### Estado Actual del Juego
-<!-- Mecánicas implementadas, condición de victoria/derrota, controles -->
+
+**Taco Defender** — tower defense hipercasual (GDD v1.1), build inicial completo vía `/new-game`.
+Detalle completo (arquitectura, asunciones, pendientes) en `idea-base.md` — resumen acá:
+
+- **Victoria:** sobrevivir las 10 oleadas. **Derrota:** vida de la taquería (base 3, mejorable
+  a 8 con "Barra Blindada") llega a 0.
+- **Controles:** tap ícono de torre → tap casilla libre = construir. Tap torre construida =
+  panel de rango/mejora/venta. Drag vertical = paneo de cámara (camino de 14 filas).
+- Sin avatar de jugador, sin drag-to-move, sin gemas/power-ups temporales — es un TD de
+  grilla, no un survivor. Por eso `src/features/` usa `board/`, `towers/`, `projectiles/`,
+  `enemies/`, `meta/`, `ui/`, `audio/` en vez de `player/`, `powerups/`, `gems/` (carpetas
+  del template removidas por no aplicar a este juego).
+- Sin capas de física en absoluto — targeting y AoE usan grupos (`&"enemies"`) + distancia.
+- Gates verdes: `gdlint src/ tests/` (0 errores), GUT 100/100 tests (348 asserts),
+  `--export-debug "Android"` (BUILD SUCCESSFUL, APK ~89MB).
 
 ### Señales clave en EventBus
-<!-- Tabla: Señal | Emisor | Receptores -->
+
+| Señal | Emisor | Receptores |
+|---|---|---|
+| `game_started` / `game_over` / `game_won` | GameManager | HUD, Pause/GameOver/VictoryScreen, AudioManager, Game.gd |
+| `gold_changed(amount)` | GameManager | HUD |
+| `base_health_changed(current, max)` | GameManager | HUD |
+| `wave_started(n)` / `wave_intermission_started(n, delay)` | GameManager | HUD, EnemySpawner, AudioManager |
+| `wave_cleared(n)` | EnemySpawner | GameManager |
+| `start_wave_button_pressed` | HUD | GameManager |
+| `enemy_spawned(type)` / `enemy_destroyed(pos, reward)` / `enemy_reached_base(dmg)` | EnemyBase/EnemySpawner | GameManager, AudioManager |
+| `build_mode_requested(type)` / `build_mode_cancelled` | HUD / Board | Board |
+| `tower_placed` / `tower_selected(info)` / `tower_deselected` | Board | HUD, AudioManager |
+| `tower_upgrade_requested(cell)` / `tower_sell_requested(cell)` | HUD | Board |
+| `tower_upgraded(cell, level)` / `tower_sold(cell, refund)` | Board | HUD, AudioManager |
+| `tips_changed` / `meta_upgrade_purchased` | MetaManager | MainMenu, UpgradeScreen |
+| `action_feedback(message)` | Board/UpgradeScreen | HUD (toast) |
+| `sound_setting_changed(enabled)` | SettingsScreen | AudioManager |
 
 ### Referencia Rápida del GDD
-<!-- Valores base del jugador, enemigos, power-ups, metagame -->
+
+Ver `idea-base.md` sección "Valores de Balance" para las tablas completas de enemigos,
+torres y las 10 oleadas. Única fuente de verdad en código: `src/core/Constants.gd`
+(`ENEMY_*`, `TOWER_CATALOG`, `WAVE_DEFINITIONS`, `META_*`).
 
 ### Autoloads registrados en project.godot
-<!-- Tabla: Nombre | Archivo | Rol -->
+
+| Nombre | Archivo | Rol |
+|---|---|---|
+| Constants | `src/core/Constants.gd` | Constantes tipadas (GDD) — sin lógica. |
+| EventBus | `src/core/EventBus.gd` | Señales cross-feature. |
+| GameManager | `src/core/GameManager.gd` | Estado de partida: oro, vida de base, oleada, pausa. |
+| SaveManager | `src/core/SaveManager.gd` | `user://save.json` — tutorial_shown, sound_enabled. |
+| MetaManager | `src/core/MetaManager.gd` | `user://meta.json` — propinas, 5 mejoras permanentes, best_wave, victorias. |
+| AudioManager | `src/features/audio/AudioManager.gd` | SFX/música — stub funcional, reacciona a EventBus. |
 
 ### Skills y Agentes Disponibles
-<!-- Lista de skills activos para este juego -->
+
+`/new-game` (este build), `/validate`, `/feature`, `/doc`, `/gen-ai-art`, `/android-deploy`,
+`/mobile-i18n` (no usado en este juego — ver Pendientes). Agentes: `godot-architect`,
+`godot-qa`, `game-designer`, `game-feel` (`.claude/.agents/`).
 
 ### Pendientes Documentados
-<!-- Features por implementar -->
+
+Ver `idea-base.md` sección "Pendientes" (arte real, audio real, CI/CD Play Store con
+secrets, multi-idioma). Nada de esto bloquea build/tests/lint — son mejoras de polish
+post-MVP.

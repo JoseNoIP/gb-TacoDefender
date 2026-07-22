@@ -1,4 +1,4 @@
-# PLACEHOLDER_GAME_NAME — Idea Base
+# Taco Defender — Idea Base
 
 > Definición viva del juego. Actualizar con `/doc` al cerrar cada tarea.
 
@@ -6,34 +6,103 @@
 
 ## Concepto
 
-**Género:** PLACEHOLDER  
-**Plataforma:** iOS 14+ / Android API 24+  
-**Control:** PLACEHOLDER (ej: touch drag, tap, swipe)  
-**Sesión target:** 2–5 minutos  
-**Propuesta de valor:** PLACEHOLDER — qué hace este juego único
+**Género:** Tower Defense hipercasual
+**Plataforma:** iOS 14+ / Android API 24+
+**Control:** Tap (construir/seleccionar torre) + Drag vertical (paneo de cámara sobre el camino)
+**Sesión target:** 3–5 minutos (GDD)
+**Propuesta de valor:** Defender la barra de una taquería contra 10 oleadas de plagas hambrientas colocando torres de ingredientes (salsa, hielo, guacamole) sobre un camino serpenteante fijo.
 
 ---
 
 ## Mecánicas Core
 
-- **Victoria:** PLACEHOLDER
-- **Derrota:** PLACEHOLDER
-- **Controles:** PLACEHOLDER
+- **Victoria:** Sobrevivir las 10 oleadas del GDD (sección 4).
+- **Derrota:** La vida de la taquería (base = 3, mejorable con "Barra Blindada") llega a 0. Cada enemigo que llega al final del camino resta `Constants.BASE_DAMAGE_PER_LEAK` (1) de vida — el GDD no especifica el daño por enemigo, se asumió 1 por igual sin importar el tipo (ver "Asunciones documentadas" abajo).
+- **Controles:**
+  - Tap sobre ícono de torre (barra inferior) → modo construcción → tap sobre casilla libre → coloca la torre (si alcanza el oro).
+  - Tap sobre torre construida → panel de selección (daño, rango, nivel, botones Mejorar/Vender).
+  - Drag vertical sobre el tablero → paneo de cámara (el camino real, 14 filas, no entra completo en la ventana visible entre el HUD y la barra inferior).
+
+---
+
+## Arquitectura (desviaciones del template genérico)
+
+El template `/new-game` está diseñado sobre el molde de un juego de movimiento/disparo (tipo GuacBlaster Survivor: Player, ProjectileSpawner, PowerUpDropper, GemSpawner, XP/level-up). Taco Defender es un tower defense — no hay avatar de jugador, no hay drag-to-move, no hay recolección de gemas ni power-ups temporales in-run. Adaptaciones documentadas:
+
+- **`src/features/board/`** (nuevo, no está en la lista genérica del skill): grilla + camino + colocación/mejora/venta de torres + TODO el input de mundo (tap/drag). Grid y torres se tratan como una sola feature — colocar una torre depende inherentemente de la celda de grilla; la comunicación INTERNA a esta feature es directa, no por EventBus (ver nota de arquitectura en `EventBus.gd`).
+- **`src/features/towers/`** en vez de `player/`: `TowerBase.gd` (sin class_name, subtipos por ruta — regla CLAUDE.md #13) + 3 subtipos delgados que leen `Constants.TOWER_CATALOG` (única fuente de verdad de stats por tipo).
+- **`src/features/projectiles/Projectile.gd`**: proyectil sin física (ni Area2D ni CharacterBody2D) — homing hacia una referencia viva, revalida `is_instance_valid()` cada frame (regla CLAUDE.md #44/#59).
+- **`src/features/enemies/`**: `EnemyBase.gd` + 3 subtipos (básico/rápido/tank) + `EnemySpawner.gd` (orquesta las 10 oleadas) + `wave_queue.gd` (lógica pura de cola de spawn).
+- **Sin capas de física** (`[layer_names]` no existe en project.godot a propósito): targeting de torres y daño en área usan grupos (`&"enemies"`) + distancia, no Area2D/collision_mask. Ver nota extensa en `Constants.gd`.
+- **`src/features/meta/upgrade_shop.gd`** + **`src/core/MetaManager.gd`**: mismo patrón que otros proyectos GuacamoleBit (SaveManager ya cubre settings/tutorial; MetaManager, en su propio `user://meta.json`, cubre propinas + las 5 mejoras permanentes — evita acercarse al límite de 20 métodos públicos por clase que exige gdlint, regla CLAUDE.md #52).
+- **FTUE ligero** (`HUD.gd::_build_ftue_overlay`): 3 mensajes estáticos con botón "Siguiente"/"Entendido", NO una escena `TutorialGame.tscn` separada — las mecánicas nuevas de este juego (construir/iniciar oleada/mejorar-vender) no encajan con la arquitectura de tutorial del template (pensada para Player/GemSpawner/PowerUpDropper, que no existen acá). `SaveManager.set_tutorial_shown(true)` se llama solo al completar el 3er mensaje, nunca antes.
+- **Sin multi-idioma**: el GDD no lo pide y no se especificaron mercados adicionales — todos los strings de UI están hardcodeados en español (sin `tr()`). Si se agrega `/mobile-i18n` después, hay que migrar los strings literales a keys + CSV.
+- **Sin ilusión de profundidad** (agente `game-feel` §6): un tower defense de grilla top-down 2D no la necesita — el camino es fijo y visible, no hay sensación de "acercarse a cámara" como en un runner.
+
+---
+
+## Asunciones documentadas (GDD ambiguo o incompleto en estos puntos)
+
+1. **Daño de un enemigo que llega a la base:** el GDD no lo especifica. Se asumió 1 vida por enemigo, sin importar el tipo (`Constants.BASE_DAMAGE_PER_LEAK`). Con solo 3-8 vidas totales, dejar pasar unos pocos enemigos es letal — encaja con la dificultad creciente de las oleadas tardías (ej. Oleada 9 "Enjambre" con 35 enemigos).
+2. **Orden de spawn dentro de una oleada mixta:** el GDD no dice si los grupos de una oleada se intercalan o van secuenciales. Se implementó secuencial (agota un grupo, luego el siguiente) — determinístico y fácil de testear (`wave_queue.gd::build_spawn_queue()`).
+3. **Barra Blindada, nivel 5:** el GDD lista literalmente "3 → 4 → 5 → 6 → 7" (5 valores = base + 4 pasos de +1). Como el sistema de tienda es uniforme (las 5 mejoras usan 5 niveles con el mismo costo por nivel: 100/250/500/1000/2000), se extrapoló el nivel 5 continuando el mismo patrón (+1/nivel) → 8 vidas. Ver `Constants.META_BASE_HP_PER_LEVEL`.
+4. **"Clientes Generosos" (+10% propinas):** el GDD no aclara "por nivel" como las otras 4 mejoras, pero la sección dice "cada mejora tiene 5 niveles" de forma general — se asumió también por nivel (nivel 5 = +50% propinas).
+5. **Forma del camino:** el GDD no define su trazado exacto, solo que es "fijo". Se diseñó un serpenteo de 6 columnas × 14 filas (7 pasadas horizontales) — largo a propósito para darle un uso real al control de "drag para desplazar cámara" del GDD (con un tablero que entrara completo en pantalla, ese control no tendría ningún propósito).
+6. **Targeting "First":** interpretado como "el enemigo con mayor distancia recorrida a lo largo del camino" (`EnemyBase.get_progress()`), equivalente a "más cerca del final" dado que todos los enemigos comparten el mismo camino fijo.
 
 ---
 
 ## Mejoras Implementadas
 
-<!-- Agregar con /doc al cerrar cada tarea -->
+- Core: Constants, EventBus, GameManager (máquina de estados: MENU/PLAYING/WAVE_INTERMISSION/PAUSED/GAME_OVER/GAME_WON), SaveManager (tutorial/sonido), MetaManager (propinas + 5 mejoras permanentes), AudioManager (stub funcional, reacciona a EventBus en vez de que cada feature le llame).
+- Tablero: grilla 6×14, camino serpenteante fijo, cámara con paneo vertical (drag), tap para construir/seleccionar.
+- 3 torres (Salsa Verde, Hielo Horchata, Catapulta Guac) con upgrade in-run hasta nivel 3, venta al 70% de lo invertido.
+- 3 enemigos (Básico, Rápido, Tank) con barra de vida visual, ralentización (Hielo Horchata) y daño en área (Catapulta Guac).
+- 10 oleadas exactas del GDD, transición manual ("Iniciar Oleada") o auto-start a los 5s.
+- Economía: oro por kill, propinas por oleada superada + bono de victoria.
+- Metagame: tienda de 5 mejoras permanentes (daño/rango/cooldown/propinas/vida global) en `UpgradeScreen.tscn`.
+- UI completa: MainMenu, Game (HUD con barra de compra, panel de selección, FTUE), PauseScreen, GameOverScreen, VictoryScreen, SettingsScreen (sonido on/off), UpgradeScreen.
+- Ícono y splash generados proceduralmente (`tools/gen_taco_icon.py`, sin IA — ver `/gen-ai-art`).
+- Tests GUT: 100 tests / 348 asserts, cubriendo toda la lógica pura (grid_math, upgrade_shop, wave_queue) y los autoloads/features con estado (GameManager, SaveManager, MetaManager, EnemyBase, TowerBase, Board, EnemySpawner, HUD).
+- `tools/run_tests.sh` reforzado: además de respaldar/restaurar `save.json`/`meta.json`, ahora detecta si algún `test_*.gd` falló al PARSEAR (GUT lo excluye del conteo en vez de fallar la corrida — bug real descubierto en esta sesión) y fuerza exit code 1 en ese caso.
+- `tools/probe_visual.gd`/`.tscn`: probe NO headless reutilizable para verificar el layout real con capturas PNG (regla CLAUDE.md #49). Uso: `godot --path . tools/probe_visual.tscn` (sin `--headless`); guarda `probe_main_menu.png`, `probe_game_initial.png` y `probe_game_with_towers.png` en `OS.get_user_data_dir()/probe_screenshots/`. Encontró y confirmó el arreglo de un bug real durante este build: el panel de FTUE sin `autowrap_mode` desbordaba el ancho de pantalla (texto y botón cortados) — ver `HUD.gd::_build_ftue_overlay()`.
+- Build Android debug verificado localmente: `godot --headless --install-android-build-template --export-debug "Android" builds/debug/TacoDefender.apk` → BUILD SUCCESSFUL (APK ~89MB).
 
 ---
 
 ## Pendientes
 
-<!-- Features por implementar -->
+- **Arte real:** todas las torres/enemigos/base/proyectiles son formas `Polygon2D` de color sólido (sin sprites) — funcionales y visualmente distinguibles por color/tamaño, pero no arte final. Icono y splash sí están generados (procedural). Seguir `/gen-ai-art` para sprites reales — dado que los tamaños en juego son chicos (~30-40px), evaluar generación procedural (Paso 4 del skill) antes que IA.
+- **Audio real:** `AudioManager.gd` es un stub funcional completo (nunca crashea sin archivos), pero no existe ningún `.wav` todavía en `assets/audio/`. Nombres esperados: `tower_place.wav`, `tower_upgrade.wav`, `enemy_die.wav`, `enemy_leak.wav`, `wave_start.wav`, `victory.wav`, `defeat.wav`, `button_tap.wav`, `music_loop.wav`. SFX de disparo por torre (muy frecuente) no se implementó — polish opcional.
+- **CI/CD Google Play:** `.github/workflows/deploy-playstore.yml` ya tiene el package name real (`com.guacamolebit.tacodefender`), pero requiere secrets de GitHub (`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_ALIAS`, `ANDROID_KEYSTORE_PASS`, `GOOGLE_PLAY_JSON`) que esta sesión no puede configurar. Ver `/android-deploy` antes de publicar — incluye la primera subida manual obligatoria a Play Console.
+- **Multi-idioma:** no implementado (ver sección Arquitectura arriba). Si se agrega, todos los strings literales en HUD/MainMenu/UpgradeScreen/PauseScreen/GameOverScreen/VictoryScreen/SettingsScreen deben migrar a `tr(&"KEY")` + CSV (`/mobile-i18n`).
+- **Feedback visual de "toast" (`EventBus.action_feedback`):** implementado como label simple con auto-hide — funcional pero sin animación de entrada/salida.
+- **Ilusión de profundidad / VFX de impacto:** no implementados (fuera de alcance para este build — el juego es 100% funcional sin ellos). Evaluar con agente `game-feel` si se quiere pulir más.
+- **Balance real:** los valores son 100% los del GDD (sin ajustes) — cualquier cambio de balance debe actualizarse en `Constants.gd` (única fuente de verdad) y documentarse acá.
 
 ---
 
-## Valores de Balance (GDD)
+## Valores de Balance (GDD v1.1)
 
-<!-- Copiar desde el GDD al correr /new-game -->
+### Economía
+Oro inicial: $100 · Venta de torres: 70% de lo invertido · Auto-start de oleada: 5s
+
+### Enemigos
+| Tipo | HP | Velocidad | Recompensa |
+|---|---|---|---|
+| Básico (mosca) | 10 | 80 px/s | $5 |
+| Rápido (cucaracha) | 5 | 200 px/s | $8 |
+| Tank (ratón) | 100 | 30 px/s | $25 |
+
+### Torres
+| Torre | Costo | Daño | Rango | Cooldown | Upgrade |
+|---|---|---|---|---|---|
+| Salsa Verde | $50 | 15 | 150px | 1.2s | +$35: +5 dmg, +15 rango |
+| Hielo Horchata | $75 | 8 | 120px | 1.5s | Slow 50%/2s base; +$50: +25% duración/nivel |
+| Catapulta Guac | $120 | 25 (AoE R=50px) | 200px | 2.5s | +$80: +10 dmg AoE |
+
+### Oleadas (10 — ver `Constants.WAVE_DEFINITIONS`)
+1. 5 Básico (1.5s) · 2. 8 Básico (1.2s) · 3. 5 Básico+3 Rápido (1.0s) · 4. 10 Rápido (0.6s) · 5. 6 Básico+1 Tank (1.0s) · 6. 12 Rápido+2 Tank (0.8s) · 7. 15 Básico+8 Rápido (0.5s) · 8. 4 Tank+10 Rápido (1.0s) · 9. 20 Básico+15 Rápido (0.4s) · 10. 6 Tank+15 Rápido+10 Básico (0.5s)
+
+### Metagame
+Propina por oleada: 10 · Bono victoria: 50 · 5 mejoras, 5 niveles c/u, costo 100/250/500/1000/2000 propinas.

@@ -48,8 +48,23 @@ for f in "${JSON_FILES[@]}"; do
     _backup "$f"
 done
 
-godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/unit -gexit -glog=2 "$@"
-EXIT_CODE=$?
+OUTPUT_LOG="$BACKUP_DIR/gut_output.log"
+godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/unit -gexit -glog=2 "$@" 2>&1 | tee "$OUTPUT_LOG"
+EXIT_CODE=${PIPESTATUS[0]}
+
+# Bug real descubierto en desarrollo (Taco Defender): un test_*.gd con un error de sintaxis
+# (ej. llamar a una función que no existe) NO hace que GUT falle la corrida — lo reporta
+# como "Failed to load script" + SCRIPT ERROR en la salida, pero simplemente lo excluye del
+# conteo (0 tests de ese archivo) y el exit code sigue siendo 0. Sin este chequeo, un
+# archivo de test roto pasaría el gate en silencio, dando falsa confianza ("todo en verde")
+# mientras esa suite entera queda sin ejecutarse. Cualquier mención de estos strings en la
+# salida fuerza el exit code a 1, sin importar lo que haya reportado GUT.
+if grep -qE "SCRIPT ERROR|Parse Error|Failed to load script" "$OUTPUT_LOG"; then
+    echo ""
+    echo "FALLO: al menos un archivo de test no pudo cargarse (ver SCRIPT ERROR/Parse Error arriba)." >&2
+    echo "GUT excluye esos archivos del conteo en vez de fallar la corrida — por eso este chequeo." >&2
+    EXIT_CODE=1
+fi
 
 for f in "${JSON_FILES[@]}"; do
     _restore "$f"
