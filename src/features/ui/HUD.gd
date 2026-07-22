@@ -3,13 +3,16 @@ extends CanvasLayer
 ## de compra de torres, botón de iniciar oleada y panel de selección de torre. Sin lógica
 ## de juego propia — solo refleja EventBus/GameManager/MetaManager y traduce taps de UI a
 ## señales que Board/GameManager escuchan. Instanciada por Game.gd (construcción 100%
-## programática, sin sprites todavía — ver /gen-ai-art).
+## programática). Los botones de compra usan los mismos sprites de torre que el tablero
+## (ver /gen-ai-art) — icon path = "res://assets/sprites/towers/%s.png" % tower_type,
+## porque Constants.TOWER_TYPE_* ya coincide 1:1 con el nombre de archivo.
 
 const ModalStyleGd := preload("res://src/shared/modal_style.gd")
 
 const TOWER_BUTTON_WIDTH: float = 110.0
 const TOWER_BUTTON_HEIGHT: float = 94.0
 const TOWER_BUTTON_GAP: float = 10.0
+const TOWER_BUTTON_ICON_SIZE: float = 40.0
 const TOAST_DURATION: float = 1.6
 
 ## FTUE ligero (adaptado — ver idea-base.md): a diferencia del FTUE interactivo del
@@ -148,13 +151,33 @@ func _build_bottom_bar() -> void:
 	for tower_type: String in Constants.TOWER_TYPES:
 		var data: Dictionary = Constants.TOWER_CATALOG.get(tower_type, {}) as Dictionary
 		var button: Button = Button.new()
-		button.text = "%s\n$%d" % [String(data.get("name", "")), int(data.get("cost", 0))]
+		button.text = ""
 		button.position = Vector2(
 			start_x + float(index) * (TOWER_BUTTON_WIDTH + TOWER_BUTTON_GAP), buttons_y
 		)
 		button.set_size(Vector2(TOWER_BUTTON_WIDTH, TOWER_BUTTON_HEIGHT))
 		button.pressed.connect(_on_tower_button_pressed.bind(tower_type))
 		add_child(button)
+
+		var icon: TextureRect = TextureRect.new()
+		icon.texture = load("res://assets/sprites/towers/%s.png" % tower_type)
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.position = Vector2((TOWER_BUTTON_WIDTH - TOWER_BUTTON_ICON_SIZE) * 0.5, 6.0)
+		icon.set_size(Vector2(TOWER_BUTTON_ICON_SIZE, TOWER_BUTTON_ICON_SIZE))
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		button.add_child(icon)
+
+		var label: Label = Label.new()
+		label.text = "%s\n$%d" % [String(data.get("name", "")), int(data.get("cost", 0))]
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.add_theme_font_size_override(&"font_size", 13)
+		label.add_theme_color_override(&"font_color", Constants.COLOR_HUD_TEXT)
+		label.position = Vector2(0.0, TOWER_BUTTON_ICON_SIZE + 8.0)
+		label.set_size(
+			Vector2(TOWER_BUTTON_WIDTH, TOWER_BUTTON_HEIGHT - TOWER_BUTTON_ICON_SIZE - 8.0)
+		)
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		button.add_child(label)
 		index += 1
 
 
