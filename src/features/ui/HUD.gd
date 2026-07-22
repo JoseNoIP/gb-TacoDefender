@@ -161,6 +161,10 @@ func _build_bottom_bar() -> void:
 
 		var icon: TextureRect = TextureRect.new()
 		icon.texture = load("res://assets/sprites/towers/%s.png" % tower_type)
+		## Sin esto, TextureRect ignora set_size() y se dibuja al tamaño nativo del
+		## sprite (72-80px, el doble del render en juego — regla CLAUDE.md #61), pisando
+		## el texto de abajo (mismo fix que BackgroundStyleGd.add_background()).
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.position = Vector2((TOWER_BUTTON_WIDTH - TOWER_BUTTON_ICON_SIZE) * 0.5, 6.0)
 		icon.set_size(Vector2(TOWER_BUTTON_ICON_SIZE, TOWER_BUTTON_ICON_SIZE))
@@ -172,9 +176,9 @@ func _build_bottom_bar() -> void:
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.add_theme_font_size_override(&"font_size", 13)
 		label.add_theme_color_override(&"font_color", Constants.COLOR_HUD_TEXT)
-		label.position = Vector2(0.0, TOWER_BUTTON_ICON_SIZE + 8.0)
+		label.position = Vector2(0.0, TOWER_BUTTON_ICON_SIZE + 10.0)
 		label.set_size(
-			Vector2(TOWER_BUTTON_WIDTH, TOWER_BUTTON_HEIGHT - TOWER_BUTTON_ICON_SIZE - 8.0)
+			Vector2(TOWER_BUTTON_WIDTH, TOWER_BUTTON_HEIGHT - TOWER_BUTTON_ICON_SIZE - 10.0)
 		)
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		button.add_child(label)
