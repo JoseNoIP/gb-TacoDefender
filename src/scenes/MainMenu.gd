@@ -8,6 +8,8 @@ extends Control
 const GAME_SCENE: String = "res://src/scenes/Game.tscn"
 const UPGRADE_SCREEN_SCENE: String = "res://src/scenes/UpgradeScreen.tscn"
 const SettingsScreenGd := preload("res://src/features/ui/SettingsScreen.gd")
+const BackgroundStyleGd := preload("res://src/shared/background_style.gd")
+const MENU_BG: String = "res://assets/sprites/backgrounds/menu_bg.png"
 
 var _tips_label: Label = Label.new()
 var _settings: CanvasLayer = null
@@ -27,12 +29,7 @@ func _build_ui() -> void:
 	position = Vector2.ZERO
 	set_size(Vector2(Constants.DESIGN_WIDTH, Constants.DESIGN_HEIGHT))
 
-	var bg: ColorRect = ColorRect.new()
-	bg.position = Vector2.ZERO
-	bg.set_size(Vector2(Constants.DESIGN_WIDTH, Constants.DESIGN_HEIGHT))
-	bg.color = Constants.COLOR_BG_BOARD
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(bg)
+	BackgroundStyleGd.add_background(self, MENU_BG)
 
 	var title: Label = Label.new()
 	title.text = "Taco Defender"

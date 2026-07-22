@@ -4,5 +4,5 @@ extends "res://src/features/towers/TowerBase.gd"
 
 func _ready() -> void:
 	_configure_from_catalog(Constants.TOWER_TYPE_SALSA_VERDE)
-	_build_visual(Vector2(36.0, 36.0), Constants.COLOR_TOWER_SALSA_VERDE)
+	_build_visual("res://assets/sprites/towers/salsa_verde.png")
 	super._ready()

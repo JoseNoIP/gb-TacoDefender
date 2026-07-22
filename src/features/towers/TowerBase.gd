@@ -162,18 +162,14 @@ func _fire_at(target: Node2D) -> void:
 	projectile.call(&"launch", target, get_effective_damage(), _tower_type, effect_params)
 
 
-func _build_visual(size: Vector2, color: Color) -> void:
-	var body: Polygon2D = Polygon2D.new()
-	body.polygon = PackedVector2Array(
-		[
-			Vector2(-size.x * 0.5, -size.y * 0.5),
-			Vector2(size.x * 0.5, -size.y * 0.5),
-			Vector2(size.x * 0.5, size.y * 0.5),
-			Vector2(-size.x * 0.5, size.y * 0.5),
-		]
-	)
-	body.color = color
-	add_child(body)
+## texture_path apunta a un sprite generado al doble del tamaño de render (ver
+## tools/gen_taco_sprites.py) — se escala 0.5 para verse nítido en pantallas retina tras
+## el stretch/mode=canvas_items del proyecto (regla CLAUDE.md #61).
+func _build_visual(texture_path: String) -> void:
+	var sprite: Sprite2D = Sprite2D.new()
+	sprite.texture = load(texture_path)
+	sprite.scale = Vector2(0.5, 0.5)
+	add_child(sprite)
 
 
 ## Anillo de rango — visible solo mientras la torre está seleccionada (tap del jugador).

@@ -6,5 +6,5 @@ func _ready() -> void:
 	_max_health = Constants.ENEMY_TANK_HP
 	_base_speed = Constants.ENEMY_TANK_SPEED
 	_reward = Constants.ENEMY_TANK_REWARD
-	_build_visual(16.0, Constants.COLOR_ENEMY_TANK)
+	_build_visual(16.0, "res://assets/sprites/enemies/tank.png")
 	super._ready()

@@ -1,11 +1,13 @@
 extends Control
 ## Tienda de mejoras permanentes (GDD sección 5): 5 mejoras, 5 niveles cada una, costo
 ## 100/250/500/1000/2000 propinas por nivel (Constants.META_UPGRADE_COSTS). Construcción
-## 100% programática — sin sprites todavía (ver /gen-ai-art).
+## 100% programática — fondo con arte IA vía BackgroundStyleGd (ver /gen-ai-art).
 
 const UpgradeShopGd := preload("res://src/features/meta/upgrade_shop.gd")
 const ModalStyleGd := preload("res://src/shared/modal_style.gd")
+const BackgroundStyleGd := preload("res://src/shared/background_style.gd")
 const MAIN_MENU_SCENE: String = "res://src/scenes/MainMenu.tscn"
+const UPGRADE_BG: String = "res://assets/sprites/backgrounds/upgrade_bg.png"
 
 var _tips_label: Label = Label.new()
 var _rows: Dictionary = {}  ## upgrade_id -> {"level_label": Label, "button": Button}
@@ -28,12 +30,7 @@ func _build_ui() -> void:
 	position = Vector2.ZERO
 	set_size(Vector2(Constants.DESIGN_WIDTH, Constants.DESIGN_HEIGHT))
 
-	var bg: ColorRect = ColorRect.new()
-	bg.position = Vector2.ZERO
-	bg.set_size(Vector2(Constants.DESIGN_WIDTH, Constants.DESIGN_HEIGHT))
-	bg.color = Constants.COLOR_BG_BOARD
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(bg)
+	BackgroundStyleGd.add_background(self, UPGRADE_BG)
 
 	var title: Label = Label.new()
 	title.text = "Mejoras Permanentes"

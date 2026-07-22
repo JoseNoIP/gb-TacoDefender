@@ -4,5 +4,5 @@ extends "res://src/features/towers/TowerBase.gd"
 
 func _ready() -> void:
 	_configure_from_catalog(Constants.TOWER_TYPE_CATAPULTA_GUAC)
-	_build_visual(Vector2(40.0, 40.0), Constants.COLOR_TOWER_CATAPULTA_GUAC)
+	_build_visual("res://assets/sprites/towers/catapulta_guac.png")
 	super._ready()

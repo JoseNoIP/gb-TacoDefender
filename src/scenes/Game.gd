@@ -1,7 +1,7 @@
 extends Node2D
-## Escena raíz de gameplay (GDD completo). Construcción 100% programática — sin sprites de
-## fondo todavía (ver /gen-ai-art); fondo es un ColorRect con Constants.COLOR_BG_BOARD.
-## Instancia todos los sistemas y pantallas de overlay, wirea el camino del Board hacia
+## Escena raíz de gameplay (GDD completo). Construcción 100% programática — fondo con
+## arte IA vía BackgroundStyleGd (ver /gen-ai-art). Instancia todos los sistemas y
+## pantallas de overlay, wirea el camino del Board hacia
 ## EnemySpawner (configuración de arranque, no un evento continuo — ver nota de
 ## arquitectura en EventBus.gd) y conecta la navegación de escena que las pantallas piden
 ## por señal local.
@@ -12,6 +12,8 @@ const HudGd := preload("res://src/features/ui/HUD.gd")
 const PauseScreenGd := preload("res://src/features/ui/PauseScreen.gd")
 const GameOverScreenGd := preload("res://src/features/ui/GameOverScreen.gd")
 const VictoryScreenGd := preload("res://src/features/ui/VictoryScreen.gd")
+const BackgroundStyleGd := preload("res://src/shared/background_style.gd")
+const GAME_BG: String = "res://assets/sprites/backgrounds/game_bg.png"
 
 const MAIN_MENU_SCENE: String = "res://src/scenes/MainMenu.tscn"
 const GAME_SCENE: String = "res://src/scenes/Game.tscn"
@@ -34,14 +36,11 @@ func _exit_tree() -> void:
 func _build_scene() -> void:
 	## Sin CanvasLayer: cualquier nodo dentro de un CanvasLayer se dibuja SIEMPRE por
 	## encima de los Node2D normales (Board, enemigos, torres, proyectiles), sin importar
-	## su valor de `layer` — un ColorRect de fondo ahí adentro taparía todo el juego
-	## (regla CLAUDE.md #43). Se agrega primero para quedar detrás por orden de árbol.
-	var bg: ColorRect = ColorRect.new()
-	bg.color = Constants.COLOR_BG_BOARD
-	bg.position = Vector2.ZERO
-	bg.set_size(Vector2(Constants.DESIGN_WIDTH, Constants.DESIGN_HEIGHT))
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(bg)
+	## su valor de `layer` — un fondo ahí adentro taparía todo el juego (regla CLAUDE.md
+	## #43). Se agrega primero para quedar detrás por orden de árbol. El tablero (360x840)
+	## cubre casi toda la pantalla de diseño (390x844) — este fondo solo se ve en los ~15px
+	## de margen a cada lado, por eso el velo es más tenue que en MainMenu/UpgradeScreen.
+	BackgroundStyleGd.add_background(self, GAME_BG, 0.2)
 
 	var board: Node2D = BoardGd.new()
 	add_child(board)

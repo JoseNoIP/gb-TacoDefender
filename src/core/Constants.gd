@@ -252,17 +252,7 @@ const COLOR_TILE_BORDER: Color = Color(0.2, 0.15, 0.08, 0.6)
 const COLOR_TILE_BASE: Color = Color(0.85, 0.45, 0.15, 1.0)
 const COLOR_TILE_SPAWN: Color = Color(0.3, 0.45, 0.25, 1.0)
 
-const COLOR_TOWER_SALSA_VERDE: Color = Color(0.25, 0.65, 0.2, 1.0)
-const COLOR_TOWER_HIELO_HORCHATA: Color = Color(0.85, 0.8, 0.65, 1.0)
-const COLOR_TOWER_CATAPULTA_GUAC: Color = Color(0.35, 0.55, 0.25, 1.0)
 const COLOR_RANGE_INDICATOR: Color = Color(1.0, 1.0, 1.0, 0.35)
 
-const COLOR_ENEMY_BASIC: Color = Color(0.15, 0.15, 0.18, 1.0)
-const COLOR_ENEMY_FAST: Color = Color(0.45, 0.28, 0.15, 1.0)
-const COLOR_ENEMY_TANK: Color = Color(0.55, 0.55, 0.58, 1.0)
 const COLOR_HEALTHBAR_BG: Color = Color(0.0, 0.0, 0.0, 0.6)
 const COLOR_HEALTHBAR_FILL: Color = Color(0.8, 0.15, 0.15, 1.0)
-
-const COLOR_PROJECTILE_SALSA_VERDE: Color = Color(0.4, 0.8, 0.3, 1.0)
-const COLOR_PROJECTILE_HIELO_HORCHATA: Color = Color(0.8, 0.9, 1.0, 1.0)
-const COLOR_PROJECTILE_CATAPULTA_GUAC: Color = Color(0.5, 0.35, 0.15, 1.0)

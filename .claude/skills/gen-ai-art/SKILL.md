@@ -179,6 +179,27 @@ Ver `tools/gen_assets.py` en el proyecto para el sistema de íconos procedurales
 | 64×128 | IA + chroma key, revisar calidad |
 | ≤ 64×64 | Procedural en Python (más control, más nítido) |
 
+**Reglas aprendidas generando sprites procedurales de gameplay (torres/enemigos/proyectiles
+de un tower defense, personajes de cualquier juego con cuerpo circular + apéndices):**
+
+1. **Generar al DOBLE del tamaño de render en juego**, y aplicar `sprite.scale = Vector2(0.5, 0.5)`
+   al `Sprite2D` que lo usa. Se ve más nítido en pantallas retina tras el
+   `stretch/mode=canvas_items` del proyecto, sin cambiar el estilo pixel-art (regla CLAUDE.md #61
+   sobre el viewport virtual fijo aplica igual acá).
+2. **Cualquier apéndice que deba sobresalir de un cuerpo circular/rectangular ya dibujado
+   (orejas, alas, patas, antenas) se dibuja DESPUÉS del cuerpo principal, nunca antes.** Si se
+   dibuja antes, el círculo/rect del cuerpo (dibujado encima) lo tapa por completo — sin error,
+   sin warning, el PNG resultante se ve como una forma lisa sin ningún rasgo. Posicionar el
+   apéndice a una distancia del centro tal que una porción quede claramente fuera del radio
+   principal (o completamente afuera si hace falta contraste total, como las orejas de un
+   ratón). Un helper `_thick_line(g, x1, y1, x2, y2, width, color)` (quad perpendicular a la
+   línea, coordenadas SIEMPRE `int()` porque `_poly`/`range()` no aceptan floats) cubre patas,
+   antenas, colas y brazos de catapulta con la misma función.
+3. **Verificar SIEMPRE con un zoom nearest-neighbor** (`img.resize((w*8, h*8), Image.NEAREST)`
+   en Pillow, o pegar varios sprites en una sola hoja de contacto) antes de integrar el sprite
+   al juego — a tamaño real (16-40px) un apéndice mal dibujado, clippeado contra el borde del
+   canvas, o tapado por otra forma es indistinguible a simple vista de uno bien dibujado.
+
 ---
 
 ### PASO 5 — GESTIÓN DE ARCHIVOS .IMPORT EN GODOT
@@ -267,6 +288,53 @@ def main():
             img.save(spec["path"], "PNG")
         time.sleep(3)
 ```
+
+---
+
+### PASO 7 — INTEGRAR FONDOS EN LA ESCENA (legibilidad de texto)
+
+Un fondo de pantalla completa generado por IA tiene MUCHO más detalle visual que el
+`ColorRect` plano que reemplaza — cualquier texto/botón que no tenga su propio panel
+opaco (título, subtítulo, contador, botón "Volver") corre el mismo riesgo de
+ilegibilidad que un `PanelContainer` sin estilo propio (regla CLAUDE.md #53), solo que
+a nivel de pantalla completa en vez de un modal.
+
+Fix: un velo semi-transparente oscuro (`ColorRect`, alpha ~0.2-0.35) ENCIMA de la
+imagen de fondo y DEBAJO del resto de la UI. Conviene un helper compartido
+(`src/shared/background_style.gd`, mismo espíritu que `modal_style.gd`) para no repetir
+la lógica de carga+velo en cada escena:
+
+```gdscript
+static func add_background(parent: Node, texture_path: String, dim_alpha: float = 0.35) -> void:
+    var bg: TextureRect = TextureRect.new()
+    bg.texture = load(texture_path)
+    bg.position = Vector2.ZERO
+    bg.set_size(Vector2(Constants.DESIGN_WIDTH, Constants.DESIGN_HEIGHT))
+    bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+    bg.stretch_mode = TextureRect.STRETCH_SCALE
+    bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    parent.add_child(bg)
+    if dim_alpha > 0.0:
+        var scrim: ColorRect = ColorRect.new()
+        scrim.position = Vector2.ZERO
+        scrim.set_size(Vector2(Constants.DESIGN_WIDTH, Constants.DESIGN_HEIGHT))
+        scrim.color = Color(0.0, 0.0, 0.0, dim_alpha)
+        scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        parent.add_child(scrim)
+```
+
+Notas:
+- Funciona igual como hijo de un `Control` (menú/tienda) o de un `Node2D` (escena de
+  gameplay) — es solo `CanvasItem`, no depende de la jerarquía. Respeta igual la regla
+  CLAUDE.md #43: agregarlo PRIMERO (nunca dentro de un `CanvasLayer`) para quedar detrás
+  del resto por orden de árbol.
+- Si el fondo queda casi totalmente tapado por otro elemento opaco de la escena (ej. el
+  tablero de un tower defense, que puede cubrir >90% del viewport), bajar `dim_alpha` a
+  ~0.15-0.2 — el fondo ahí solo aporta ambientación en los márgenes visibles, no
+  legibilidad de texto, así que un velo fuerte solo lo apaga sin necesidad.
+- Verificar el resultado con una captura real (`tools/probe_visual.gd`, regla CLAUDE.md
+  #49) — un velo con alpha mal calibrado (muy bajo = texto ilegible, muy alto = se pierde
+  el arte) no se detecta con ningún test headless.
 
 ---
 

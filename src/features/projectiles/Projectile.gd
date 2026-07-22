@@ -70,22 +70,16 @@ func _apply_aoe(center: Vector2, radius: float) -> void:
 			enemy.call(&"take_damage", _damage)
 
 
+## Sprites generados al doble del tamaño de render (ver tools/gen_taco_sprites.py) —
+## se escala 0.5 para verse nítido en pantallas retina (regla CLAUDE.md #61).
 func _build_visual() -> void:
-	var color: Color = Constants.COLOR_PROJECTILE_SALSA_VERDE
+	var texture_path: String = "res://assets/sprites/projectiles/salsa_verde.png"
 	match _tower_type:
 		Constants.TOWER_TYPE_HIELO_HORCHATA:
-			color = Constants.COLOR_PROJECTILE_HIELO_HORCHATA
+			texture_path = "res://assets/sprites/projectiles/hielo_horchata.png"
 		Constants.TOWER_TYPE_CATAPULTA_GUAC:
-			color = Constants.COLOR_PROJECTILE_CATAPULTA_GUAC
-	var body: Polygon2D = Polygon2D.new()
-	body.polygon = _make_circle_points(6.0, 8)
-	body.color = color
-	add_child(body)
-
-
-func _make_circle_points(radius: float, sides: int) -> PackedVector2Array:
-	var points: PackedVector2Array = PackedVector2Array()
-	for i in range(sides):
-		var angle: float = TAU * float(i) / float(sides)
-		points.append(Vector2(cos(angle), sin(angle)) * radius)
-	return points
+			texture_path = "res://assets/sprites/projectiles/catapulta_guac.png"
+	var sprite: Sprite2D = Sprite2D.new()
+	sprite.texture = load(texture_path)
+	sprite.scale = Vector2(0.5, 0.5)
+	add_child(sprite)

@@ -80,20 +80,16 @@ func get_max_health() -> float:
 	return _max_health
 
 
-func _build_visual(radius: float, color: Color) -> void:
+## texture_path apunta a un sprite generado al doble del tamaño de render (ver
+## tools/gen_taco_sprites.py) — se escala 0.5 para verse nítido en pantallas retina tras
+## el stretch/mode=canvas_items del proyecto (regla CLAUDE.md #61). radius se sigue
+## guardando para la barra de vida (_draw()), que no depende del sprite.
+func _build_visual(radius: float, texture_path: String) -> void:
 	_visual_radius = radius
-	var body: Polygon2D = Polygon2D.new()
-	body.polygon = _make_circle_points(radius, 10)
-	body.color = color
-	add_child(body)
-
-
-func _make_circle_points(radius: float, sides: int) -> PackedVector2Array:
-	var points: PackedVector2Array = PackedVector2Array()
-	for i in range(sides):
-		var angle: float = TAU * float(i) / float(sides)
-		points.append(Vector2(cos(angle), sin(angle)) * radius)
-	return points
+	var sprite: Sprite2D = Sprite2D.new()
+	sprite.texture = load(texture_path)
+	sprite.scale = Vector2(0.5, 0.5)
+	add_child(sprite)
 
 
 func _move(delta: float) -> void:
