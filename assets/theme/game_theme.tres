@@ -1,0 +1,68 @@
+[gd_resource type="Theme" format=3]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r8kes"]
+content_margin_left = 12.0
+content_margin_top = 6.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+bg_color = Color(0.35, 0.3, 0.28, 0.55)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_trfjm"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_k528p"]
+content_margin_left = 12.0
+content_margin_top = 6.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+bg_color = Color(0.85, 0.4, 0.16, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cu4xe"]
+content_margin_left = 12.0
+content_margin_top = 6.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+bg_color = Color(0.75, 0.32, 0.12, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_605w4"]
+content_margin_left = 12.0
+content_margin_top = 6.0
+content_margin_right = 12.0
+content_margin_bottom = 6.0
+bg_color = Color(0.58, 0.24, 0.09, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4lwr2"]
+bg_color = Color(0.086, 0.055, 0.035, 0.97)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[resource]
+Button/colors/font_color = Color(1, 0.97, 0.9, 1)
+Button/colors/font_disabled_color = Color(0.8, 0.78, 0.75, 0.7)
+Button/colors/font_focus_color = Color(1, 0.97, 0.9, 1)
+Button/colors/font_hover_color = Color(1, 0.97, 0.9, 1)
+Button/colors/font_pressed_color = Color(1, 0.97, 0.9, 1)
+Button/styles/disabled = SubResource("StyleBoxFlat_r8kes")
+Button/styles/focus = SubResource("StyleBoxEmpty_trfjm")
+Button/styles/hover = SubResource("StyleBoxFlat_k528p")
+Button/styles/normal = SubResource("StyleBoxFlat_cu4xe")
+Button/styles/pressed = SubResource("StyleBoxFlat_605w4")
+Label/colors/font_color = Color(1, 1, 1, 1)
+PanelContainer/styles/panel = SubResource("StyleBoxFlat_4lwr2")

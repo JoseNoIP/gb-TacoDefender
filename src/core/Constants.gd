@@ -246,6 +246,18 @@ const COLOR_TIPS: Color = Color(0.55, 0.9, 0.6, 1.0)
 const COLOR_HP_FULL: Color = Color(0.9, 0.25, 0.25, 1.0)
 const COLOR_HP_EMPTY: Color = Color(0.35, 0.1, 0.1, 1.0)
 
+## Paleta del Theme global (tools/build_game_theme.gd -> assets/theme/game_theme.tres,
+## referenciado en project.godot [gui] theme/custom) — reestiliza TODOS los Button/Label/
+## PanelContainer del juego de una sola vez, en vez del tema plano default de Godot.
+const COLOR_BUTTON_NORMAL: Color = Color(0.75, 0.32, 0.12, 1.0)  ## naranja chile tostado.
+const COLOR_BUTTON_HOVER: Color = Color(0.85, 0.4, 0.16, 1.0)
+const COLOR_BUTTON_PRESSED: Color = Color(0.58, 0.24, 0.09, 1.0)
+const COLOR_BUTTON_DISABLED: Color = Color(0.35, 0.3, 0.28, 0.55)
+const COLOR_BUTTON_TEXT: Color = Color(1.0, 0.97, 0.9, 1.0)
+const COLOR_BUTTON_TEXT_DISABLED: Color = Color(0.8, 0.78, 0.75, 0.7)
+const UI_BUTTON_CORNER_RADIUS: int = 12
+const UI_PANEL_CORNER_RADIUS: int = 12  ## igual a ModalStyleGd.CORNER_RADIUS, a propósito.
+
 const COLOR_TILE_BUILDABLE: Color = Color(0.62, 0.5, 0.32, 1.0)
 const COLOR_TILE_PATH: Color = Color(0.42, 0.32, 0.18, 1.0)
 const COLOR_TILE_BORDER: Color = Color(0.2, 0.15, 0.08, 0.6)

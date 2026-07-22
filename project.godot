@@ -36,6 +36,10 @@ AudioManager="*res://src/features/audio/AudioManager.gd"
 
 enabled=PackedStringArray("res://addons/gut/plugin.cfg")
 
+[gui]
+
+theme/custom="res://assets/theme/game_theme.tres"
+
 [display]
 
 window/size/viewport_width=390
