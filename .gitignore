@@ -12,6 +12,9 @@ builds/release/
 __pycache__/
 *.pyc
 /tmp/
+# Cache de descargas IA sin procesar -- reproducible desde tools/fetch_taco_object_sprites.py
+# (prompts + seeds documentados ahí), no hace falta versionarlo.
+assets/sprites/_raw_ai/
 
 # macOS
 .DS_Store
