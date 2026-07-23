@@ -9,6 +9,7 @@ extends CanvasLayer
 
 const ModalStyleGd := preload("res://src/shared/modal_style.gd")
 const IconStyleGd := preload("res://src/shared/icon_style.gd")
+const ButtonSoundGd := preload("res://src/shared/button_sound.gd")
 
 const TOWER_BUTTON_WIDTH: float = 110.0
 const TOWER_BUTTON_HEIGHT: float = 94.0
@@ -153,6 +154,7 @@ func _build_top_bar() -> void:
 	_pause_button.position = Vector2(Constants.DESIGN_WIDTH - 56.0, 52.0)
 	_pause_button.set_size(Vector2(40.0, 40.0))
 	_pause_button.pressed.connect(_on_pause_pressed)
+	ButtonSoundGd.attach(_pause_button)
 	add_child(_pause_button)
 
 
@@ -169,6 +171,7 @@ func _build_bottom_bar() -> void:
 	_start_wave_button.position = Vector2(20.0, bar_top + 6.0)
 	_start_wave_button.set_size(Vector2(Constants.DESIGN_WIDTH - 40.0, 34.0))
 	_start_wave_button.pressed.connect(_on_start_wave_pressed)
+	ButtonSoundGd.attach(_start_wave_button)
 	add_child(_start_wave_button)
 
 	var buttons_y: float = bar_top + 48.0
@@ -184,6 +187,7 @@ func _build_bottom_bar() -> void:
 		)
 		button.set_size(Vector2(TOWER_BUTTON_WIDTH, TOWER_BUTTON_HEIGHT))
 		button.pressed.connect(_on_tower_button_pressed.bind(tower_type))
+		ButtonSoundGd.attach(button)
 		add_child(button)
 
 		var icon: TextureRect = IconStyleGd.make_icon(
@@ -261,16 +265,19 @@ func _build_selection_panel() -> void:
 
 	_selection_upgrade_button.custom_minimum_size = Vector2(120.0, 40.0)
 	_selection_upgrade_button.pressed.connect(_on_upgrade_pressed)
+	ButtonSoundGd.attach(_selection_upgrade_button)
 	buttons_row.add_child(_selection_upgrade_button)
 
 	_selection_sell_button.custom_minimum_size = Vector2(120.0, 40.0)
 	_selection_sell_button.pressed.connect(_on_sell_pressed)
+	ButtonSoundGd.attach(_selection_sell_button)
 	buttons_row.add_child(_selection_sell_button)
 
 	var close_button: Button = Button.new()
 	close_button.text = "BTN_CLOSE"
 	close_button.custom_minimum_size = Vector2(0.0, 32.0)
 	close_button.pressed.connect(_on_close_selection_pressed)
+	ButtonSoundGd.attach(close_button)
 	vbox.add_child(close_button)
 
 	_selection_panel.hide()
@@ -317,6 +324,7 @@ func _build_ftue_overlay() -> void:
 	_ftue_button.text = "BTN_NEXT"
 	_ftue_button.custom_minimum_size = Vector2(0.0, 40.0)
 	_ftue_button.pressed.connect(_on_ftue_button_pressed)
+	ButtonSoundGd.attach(_ftue_button)
 	vbox.add_child(_ftue_button)
 
 	## set_tutorial_shown(true) SOLO se llama al completar el último paso (_on_ftue_button_

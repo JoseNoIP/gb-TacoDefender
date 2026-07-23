@@ -9,6 +9,7 @@ extends Control
 
 const MAIN_MENU_SCENE: String = "res://src/scenes/MainMenu.tscn"
 const BackgroundStyleGd := preload("res://src/shared/background_style.gd")
+const ButtonSoundGd := preload("res://src/shared/button_sound.gd")
 const MENU_BG: String = "res://assets/sprites/backgrounds/menu_bg.png"
 
 ## locale -> nombre nativo (nunca tr() -- ver nota de arriba).
@@ -41,6 +42,7 @@ func _build_ui() -> void:
 		button.text = String(LANGUAGE_NAMES.get(locale, locale))
 		button.custom_minimum_size = Vector2(0.0, 52.0)
 		button.pressed.connect(_on_language_pressed.bind(locale))
+		ButtonSoundGd.attach(button)
 		vbox.add_child(button)
 
 

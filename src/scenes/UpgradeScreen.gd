@@ -6,6 +6,7 @@ extends Control
 const UpgradeShopGd := preload("res://src/features/meta/upgrade_shop.gd")
 const ModalStyleGd := preload("res://src/shared/modal_style.gd")
 const BackgroundStyleGd := preload("res://src/shared/background_style.gd")
+const ButtonSoundGd := preload("res://src/shared/button_sound.gd")
 const MAIN_MENU_SCENE: String = "res://src/scenes/MainMenu.tscn"
 const UPGRADE_BG: String = "res://assets/sprites/backgrounds/upgrade_bg.png"
 
@@ -66,6 +67,7 @@ func _build_ui() -> void:
 	back_button.position = Vector2(20.0, Constants.DESIGN_HEIGHT - 76.0)
 	back_button.set_size(Vector2(Constants.DESIGN_WIDTH - 40.0, 48.0))
 	back_button.pressed.connect(_on_back_pressed)
+	ButtonSoundGd.attach(back_button)
 	add_child(back_button)
 
 	_refresh_all()
@@ -104,6 +106,7 @@ func _build_row(upgrade_id: String) -> PanelContainer:
 	var button: Button = Button.new()
 	button.custom_minimum_size = Vector2(130.0, 44.0)
 	button.pressed.connect(_on_upgrade_pressed.bind(upgrade_id))
+	ButtonSoundGd.attach(button)
 	hbox.add_child(button)
 
 	_rows[upgrade_id] = {"name_label": name_label, "level_label": level_label, "button": button}

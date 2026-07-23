@@ -10,6 +10,7 @@ extends CanvasLayer
 ## KEY cruda y se retraducen solos vía Control.auto_translate_mode.
 
 const ModalStyleGd := preload("res://src/shared/modal_style.gd")
+const ButtonSoundGd := preload("res://src/shared/button_sound.gd")
 
 ## locale -> nombre nativo (nunca tr() -- un jugador que no lee el idioma activo debe
 ## poder reconocer el suyo igual, mismo criterio que LanguageSelectScreen).
@@ -61,16 +62,19 @@ func _build_ui() -> void:
 
 	_sound_button.custom_minimum_size = Vector2(0.0, 44.0)
 	_sound_button.pressed.connect(_on_sound_pressed)
+	ButtonSoundGd.attach(_sound_button)
 	vbox.add_child(_sound_button)
 
 	_lang_button.custom_minimum_size = Vector2(0.0, 44.0)
 	_lang_button.pressed.connect(_on_lang_pressed)
+	ButtonSoundGd.attach(_lang_button)
 	vbox.add_child(_lang_button)
 
 	var close_button: Button = Button.new()
 	close_button.text = "BTN_CLOSE"
 	close_button.custom_minimum_size = Vector2(0.0, 44.0)
 	close_button.pressed.connect(_on_close_pressed)
+	ButtonSoundGd.attach(close_button)
 	vbox.add_child(close_button)
 
 

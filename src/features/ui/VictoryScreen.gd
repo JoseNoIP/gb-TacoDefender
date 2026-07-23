@@ -8,6 +8,7 @@ signal main_menu_requested
 
 const ModalStyleGd := preload("res://src/shared/modal_style.gd")
 const IconStyleGd := preload("res://src/shared/icon_style.gd")
+const ButtonSoundGd := preload("res://src/shared/button_sound.gd")
 const ICON_SIZE: float = 64.0
 
 var _panel: PanelContainer = PanelContainer.new()
@@ -67,6 +68,7 @@ func _make_button(text: String, handler: Callable) -> Button:
 	button.text = text
 	button.custom_minimum_size = Vector2(0.0, 44.0)
 	button.pressed.connect(handler)
+	ButtonSoundGd.attach(button)
 	return button
 
 

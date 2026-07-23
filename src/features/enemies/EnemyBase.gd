@@ -6,6 +6,11 @@ extends Node2D
 ## define ninguna capa de física. `position`/`global_position` son las propiedades nativas
 ## de Node2D — nunca redeclaradas (regla CLAUDE.md #38).
 
+const ImpactVfxGd := preload("res://src/features/vfx/impact_vfx.gd")
+const HIT_FLASH_COLOR: Color = Color(3.0, 3.0, 3.0, 1.0)  ## modulate sobre-expuesto = flash.
+const HIT_FLASH_DURATION: float = 0.15
+const DEATH_BURST_COLOR: Color = Color(0.85, 0.82, 0.75, 0.9)  ## polvo neutro, cualquier tipo.
+
 var _max_health: float = 10.0
 var _health: float = 10.0
 var _base_speed: float = 80.0
@@ -19,6 +24,8 @@ var _total_path_length: float = 1.0
 
 var _slow_multiplier: float = 1.0
 var _slow_timer: float = 0.0
+
+var _hit_flash_tween: Tween = null
 
 
 ## El subtipo (enemy_basic/fast/tank.gd) ya fijó _max_health/_reward ANTES de llamar
@@ -63,6 +70,21 @@ func take_damage(amount: float) -> void:
 	queue_redraw()
 	if _health <= 0.0:
 		_die()
+	else:
+		_flash_hit()
+
+
+## Golpe no letal: modulate sobre-expuesto (>1.0, no un shader) que vuelve a la normalidad
+## en HIT_FLASH_DURATION -- técnica estándar de "hit flash" en 2D, sin agregar shaders al
+## proyecto (nunca se usó ninguno hasta ahora). Mata cualquier tween en vuelo antes de
+## arrancar uno nuevo -- varias torres pueden pegarle al mismo enemigo en el mismo frame
+## (mismo motivo que el toast de HUD.gd, regla CLAUDE.md sobre tweens superpuestos).
+func _flash_hit() -> void:
+	if _hit_flash_tween != null and _hit_flash_tween.is_valid():
+		_hit_flash_tween.kill()
+	modulate = HIT_FLASH_COLOR
+	_hit_flash_tween = create_tween()
+	_hit_flash_tween.tween_property(self, ^"modulate", Color.WHITE, HIT_FLASH_DURATION)
 
 
 ## ratio/duration del efecto de Hielo Horchata (GDD sección 3) — se queda con el
@@ -125,7 +147,16 @@ func _on_reached_base() -> void:
 	queue_free()
 
 
+## El CPUParticles2D que spawnea ImpactVfxGd sobrevive DEFAULT_LIFETIME (0.35s) después de
+## que este nodo ya se liberó -- un test que mata un enemigo (take_damage letal) termina
+## su función antes de que pase ese tiempo real, y GUT reporta "test script still has
+## children when all tests finished" al cerrar la suite. No es un leak real: ese hijo
+## cuelga del mismo nodo que GUT ya limpia con add_child_autofree/queue_free (que libera
+## todo el subárbol, partículas incluidas) -- mismo espíritu que la regla CLAUDE.md #55
+## (loop de música dejando un warning benigno al cerrar el proceso). El exit code sigue
+## en 0 y los asserts siguen en verde; no hace falta "arreglar" este warning.
 func _die() -> void:
+	ImpactVfxGd.spawn(get_parent(), global_position, DEATH_BURST_COLOR)
 	EventBus.enemy_destroyed.emit(global_position, _reward)
 	queue_free()
 

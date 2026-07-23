@@ -17,6 +17,7 @@ const UPGRADE_SCREEN_SCENE: String = "res://src/scenes/UpgradeScreen.tscn"
 const LANGUAGE_SELECT_SCENE: String = "res://src/scenes/LanguageSelectScreen.tscn"
 const SettingsScreenGd := preload("res://src/features/ui/SettingsScreen.gd")
 const BackgroundStyleGd := preload("res://src/shared/background_style.gd")
+const ButtonSoundGd := preload("res://src/shared/button_sound.gd")
 const MENU_BG: String = "res://assets/sprites/backgrounds/menu_bg.png"
 
 var _tips_label: Label = Label.new()
@@ -90,18 +91,21 @@ func _build_ui() -> void:
 	play_button.text = "BTN_PLAY"
 	play_button.custom_minimum_size = Vector2(0.0, 52.0)
 	play_button.pressed.connect(_on_play_pressed)
+	ButtonSoundGd.attach(play_button)
 	vbox.add_child(play_button)
 
 	var upgrades_button: Button = Button.new()
 	upgrades_button.text = "BTN_UPGRADES"
 	upgrades_button.custom_minimum_size = Vector2(0.0, 52.0)
 	upgrades_button.pressed.connect(_on_upgrades_pressed)
+	ButtonSoundGd.attach(upgrades_button)
 	vbox.add_child(upgrades_button)
 
 	var settings_button: Button = Button.new()
 	settings_button.text = "BTN_SETTINGS"
 	settings_button.custom_minimum_size = Vector2(0.0, 52.0)
 	settings_button.pressed.connect(_on_settings_pressed)
+	ButtonSoundGd.attach(settings_button)
 	vbox.add_child(settings_button)
 
 	_settings = SettingsScreenGd.new()

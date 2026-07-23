@@ -4,8 +4,11 @@ extends Node2D
 ## objetivo puede morir a mitad de vuelo por otra torre antes de que este impacte
 ## (regla CLAUDE.md #44/#59) y, si eso pasa, sigue hacia su última posición conocida.
 
+const ImpactVfxGd := preload("res://src/features/vfx/impact_vfx.gd")
+
 const SPEED: float = 520.0
 const HIT_DISTANCE: float = 10.0
+const AOE_BURST_AMOUNT: int = 20
 
 var _target: Node2D = null
 var _last_known_position: Vector2 = Vector2.ZERO
@@ -41,6 +44,7 @@ func _process(delta: float) -> void:
 
 
 func _impact(at_position: Vector2) -> void:
+	var burst_amount: int = 12
 	match _tower_type:
 		Constants.TOWER_TYPE_HIELO_HORCHATA:
 			if is_instance_valid(_target):
@@ -52,10 +56,22 @@ func _impact(at_position: Vector2) -> void:
 				)
 		Constants.TOWER_TYPE_CATAPULTA_GUAC:
 			_apply_aoe(at_position, float(_effect_params.get("aoe_radius", 50.0)))
+			burst_amount = AOE_BURST_AMOUNT
 		_:
 			if is_instance_valid(_target):
 				_target.call(&"take_damage", _damage)
+	ImpactVfxGd.spawn(get_parent(), at_position, _impact_color(), burst_amount)
 	queue_free()
+
+
+func _impact_color() -> Color:
+	match _tower_type:
+		Constants.TOWER_TYPE_HIELO_HORCHATA:
+			return Color(0.8, 0.9, 1.0, 1.0)
+		Constants.TOWER_TYPE_CATAPULTA_GUAC:
+			return Color(0.5, 0.35, 0.15, 1.0)
+		_:
+			return Color(0.4, 0.8, 0.3, 1.0)
 
 
 func _apply_aoe(center: Vector2, radius: float) -> void:
