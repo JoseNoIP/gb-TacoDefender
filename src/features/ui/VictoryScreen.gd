@@ -47,7 +47,7 @@ func _build_ui() -> void:
 	vbox.add_child(icon)
 
 	var title: Label = Label.new()
-	title.text = "TAQUERIA A SALVO!"
+	title.text = "TITLE_VICTORY"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override(&"font_size", 20)
 	title.add_theme_color_override(&"font_color", Constants.COLOR_TIPS)
@@ -58,8 +58,8 @@ func _build_ui() -> void:
 	_stats_label.add_theme_color_override(&"font_color", Constants.COLOR_HUD_TEXT)
 	vbox.add_child(_stats_label)
 
-	vbox.add_child(_make_button("Jugar de nuevo", _on_restart_pressed))
-	vbox.add_child(_make_button("Menu Principal", _on_menu_pressed))
+	vbox.add_child(_make_button("BTN_PLAY_AGAIN", _on_restart_pressed))
+	vbox.add_child(_make_button("BTN_MAIN_MENU", _on_menu_pressed))
 
 
 func _make_button(text: String, handler: Callable) -> Button:
@@ -72,8 +72,7 @@ func _make_button(text: String, handler: Callable) -> Button:
 
 func _on_game_won() -> void:
 	_stats_label.text = (
-		"Sobreviviste las %d oleadas!\nPropinas totales: %d"
-		% [Constants.TOTAL_WAVES, MetaManager.get_tips()]
+		tr(&"LABEL_VICTORY_STATS") % [Constants.TOTAL_WAVES, MetaManager.get_tips()]
 	)
 	_panel.show()
 

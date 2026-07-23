@@ -4,25 +4,40 @@ extends Control
 ## HUD.gd), no una escena de tutorial separada: la arquitectura de tutorial del template
 ## está pensada para un juego de movimiento/disparo (Player/GemSpawner/PowerUpDropper) que
 ## no existe en este tower defense — ver idea-base.md, sección FASE 0/FTUE.
+##
+## i18n (ver /mobile-i18n): título/subtítulo/botones son texto estático asignado una sola
+## vez -- usan la KEY cruda (sin tr()) y Control.auto_translate_mode los retraduce solo
+## si el idioma cambia mientras esta pantalla sigue viva (child SettingsScreen abierto
+## encima). stats_label/tips_label tienen valores incrustados con %, así que SÍ necesitan
+## tr() explícito + reconstruirse en EventBus.language_changed (auto_translate no alcanza
+## para texto formateado).
 
 const GAME_SCENE: String = "res://src/scenes/Game.tscn"
 const UPGRADE_SCREEN_SCENE: String = "res://src/scenes/UpgradeScreen.tscn"
+const LANGUAGE_SELECT_SCENE: String = "res://src/scenes/LanguageSelectScreen.tscn"
 const SettingsScreenGd := preload("res://src/features/ui/SettingsScreen.gd")
 const BackgroundStyleGd := preload("res://src/shared/background_style.gd")
 const MENU_BG: String = "res://assets/sprites/backgrounds/menu_bg.png"
 
 var _tips_label: Label = Label.new()
+var _stats_label: Label = Label.new()
 var _settings: CanvasLayer = null
 
 
 func _ready() -> void:
+	if not LocalizationManager.is_language_selected():
+		get_tree().change_scene_to_file.call_deferred(LANGUAGE_SELECT_SCENE)
+		return
 	_build_ui()
 	EventBus.tips_changed.connect(_on_tips_changed)
+	EventBus.language_changed.connect(_on_language_changed)
 
 
 func _exit_tree() -> void:
 	if EventBus.tips_changed.is_connected(_on_tips_changed):
 		EventBus.tips_changed.disconnect(_on_tips_changed)
+	if EventBus.language_changed.is_connected(_on_language_changed):
+		EventBus.language_changed.disconnect(_on_language_changed)
 
 
 func _build_ui() -> void:
@@ -41,7 +56,7 @@ func _build_ui() -> void:
 	add_child(title)
 
 	var subtitle: Label = Label.new()
-	subtitle.text = "Defiende la barra de la taqueria"
+	subtitle.text = "MENU_SUBTITLE"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.position = Vector2(0.0, 200.0)
 	subtitle.set_size(Vector2(Constants.DESIGN_WIDTH, 30.0))
@@ -49,17 +64,13 @@ func _build_ui() -> void:
 	subtitle.add_theme_color_override(&"font_color", Constants.COLOR_HUD_TEXT)
 	add_child(subtitle)
 
-	var stats_label: Label = Label.new()
-	stats_label.text = (
-		"Mejor oleada: %d/%d   Victorias: %d"
-		% [MetaManager.get_best_wave(), Constants.TOTAL_WAVES, MetaManager.get_victories()]
-	)
-	stats_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	stats_label.position = Vector2(0.0, 250.0)
-	stats_label.set_size(Vector2(Constants.DESIGN_WIDTH, 26.0))
-	stats_label.add_theme_font_size_override(&"font_size", Constants.UI_MIN_FONT_SIZE)
-	stats_label.add_theme_color_override(&"font_color", Constants.COLOR_HUD_TEXT)
-	add_child(stats_label)
+	_stats_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_stats_label.position = Vector2(0.0, 250.0)
+	_stats_label.set_size(Vector2(Constants.DESIGN_WIDTH, 26.0))
+	_stats_label.add_theme_font_size_override(&"font_size", Constants.UI_MIN_FONT_SIZE)
+	_stats_label.add_theme_color_override(&"font_color", Constants.COLOR_HUD_TEXT)
+	add_child(_stats_label)
+	_refresh_stats_label()
 
 	_tips_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_tips_label.position = Vector2(0.0, 282.0)
@@ -76,19 +87,19 @@ func _build_ui() -> void:
 	add_child(vbox)
 
 	var play_button: Button = Button.new()
-	play_button.text = "JUGAR"
+	play_button.text = "BTN_PLAY"
 	play_button.custom_minimum_size = Vector2(0.0, 52.0)
 	play_button.pressed.connect(_on_play_pressed)
 	vbox.add_child(play_button)
 
 	var upgrades_button: Button = Button.new()
-	upgrades_button.text = "MEJORAS"
+	upgrades_button.text = "BTN_UPGRADES"
 	upgrades_button.custom_minimum_size = Vector2(0.0, 52.0)
 	upgrades_button.pressed.connect(_on_upgrades_pressed)
 	vbox.add_child(upgrades_button)
 
 	var settings_button: Button = Button.new()
-	settings_button.text = "CONFIGURACION"
+	settings_button.text = "BTN_SETTINGS"
 	settings_button.custom_minimum_size = Vector2(0.0, 52.0)
 	settings_button.pressed.connect(_on_settings_pressed)
 	vbox.add_child(settings_button)
@@ -97,8 +108,20 @@ func _build_ui() -> void:
 	add_child(_settings)
 
 
+func _refresh_stats_label() -> void:
+	_stats_label.text = (
+		tr(&"MENU_STATS")
+		% [MetaManager.get_best_wave(), Constants.TOTAL_WAVES, MetaManager.get_victories()]
+	)
+
+
 func _on_tips_changed(new_amount: int) -> void:
-	_tips_label.text = "Propinas: %d" % new_amount
+	_tips_label.text = tr(&"LABEL_TIPS") % new_amount
+
+
+func _on_language_changed(_locale: String) -> void:
+	_refresh_stats_label()
+	_on_tips_changed(MetaManager.get_tips())
 
 
 func _on_play_pressed() -> void:

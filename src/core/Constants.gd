@@ -13,6 +13,10 @@ extends Node
 const DESIGN_WIDTH: float = 390.0
 const DESIGN_HEIGHT: float = 844.0
 
+# --- Multi-idioma (ver /mobile-i18n, LocalizationManager.gd) ---
+const DEFAULT_LOCALE: String = "es"
+const SUPPORTED_LOCALES: Array = ["es", "en", "pt_BR", "fr"]
+
 # --- Grid del tablero (GDD sección 3 y 4 — el camino fijo hacia la taquería) ---
 const TILE_SIZE: float = 60.0
 const GRID_COLS: int = 6
@@ -151,10 +155,12 @@ const TOWER_TYPES: Array = [
 ## (subtipos se configuran leyendo esto, en vez de repetir cada const individual). Campos
 ## que un tipo no usa (ej. "aoe_radius" en Salsa Verde) quedan en 0.0 — nunca null, para
 ## no forzar checks de null en el código que los lee.
+## "name" es una KEY de traducción (ver /mobile-i18n, assets/translations/translations.txt),
+## no texto de display — quien lo consuma debe envolverlo en tr(), nunca mostrarlo directo.
 const TOWER_CATALOG: Dictionary = {
 	TOWER_TYPE_SALSA_VERDE:
 	{
-		"name": "Salsa Verde",
+		"name": "TOWER_NAME_SALSA_VERDE",
 		"cost": TOWER_SALSA_VERDE_COST,
 		"damage": TOWER_SALSA_VERDE_DAMAGE,
 		"range": TOWER_SALSA_VERDE_RANGE,
@@ -168,7 +174,7 @@ const TOWER_CATALOG: Dictionary = {
 	},
 	TOWER_TYPE_HIELO_HORCHATA:
 	{
-		"name": "Hielo Horchata",
+		"name": "TOWER_NAME_HIELO_HORCHATA",
 		"cost": TOWER_HIELO_HORCHATA_COST,
 		"damage": TOWER_HIELO_HORCHATA_DAMAGE,
 		"range": TOWER_HIELO_HORCHATA_RANGE,
@@ -182,7 +188,7 @@ const TOWER_CATALOG: Dictionary = {
 	},
 	TOWER_TYPE_CATAPULTA_GUAC:
 	{
-		"name": "Catapulta Guac",
+		"name": "TOWER_NAME_CATAPULTA_GUAC",
 		"cost": TOWER_CATAPULTA_GUAC_COST,
 		"damage": TOWER_CATAPULTA_GUAC_DAMAGE,
 		"range": TOWER_CATAPULTA_GUAC_RANGE,

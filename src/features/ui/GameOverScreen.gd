@@ -47,7 +47,7 @@ func _build_ui() -> void:
 	vbox.add_child(icon)
 
 	var title: Label = Label.new()
-	title.text = "LA TAQUERIA CAYO"
+	title.text = "TITLE_GAME_OVER"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override(&"font_size", 20)
 	title.add_theme_color_override(&"font_color", Constants.COLOR_HP_FULL)
@@ -58,8 +58,8 @@ func _build_ui() -> void:
 	_stats_label.add_theme_color_override(&"font_color", Constants.COLOR_HUD_TEXT)
 	vbox.add_child(_stats_label)
 
-	vbox.add_child(_make_button("Reintentar", _on_restart_pressed))
-	vbox.add_child(_make_button("Menu Principal", _on_menu_pressed))
+	vbox.add_child(_make_button("BTN_RETRY", _on_restart_pressed))
+	vbox.add_child(_make_button("BTN_MAIN_MENU", _on_menu_pressed))
 
 
 func _make_button(text: String, handler: Callable) -> Button:
@@ -72,7 +72,7 @@ func _make_button(text: String, handler: Callable) -> Button:
 
 func _on_game_over() -> void:
 	_stats_label.text = (
-		"Llegaste a la oleada %d/%d\nOro final: $%d"
+		tr(&"LABEL_GAME_OVER_STATS")
 		% [GameManager.get_current_wave(), Constants.TOTAL_WAVES, GameManager.get_gold()]
 	)
 	_panel.show()

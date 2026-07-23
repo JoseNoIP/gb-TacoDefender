@@ -60,3 +60,7 @@ signal meta_upgrade_purchased(upgrade_id: String, new_level: int)
 ## crear una señal específica por cada mensaje de feedback posible.
 signal action_feedback(message: String)
 signal sound_setting_changed(enabled: bool)
+## Emitida por LocalizationManager.set_language() -- pantallas vivas con texto formateado
+## con tr() (no el auto_translate_mode nativo de Control, que ya retraduce solo el texto
+## estático) escuchan esto para re-renderizar sus labels dinámicos (ver /mobile-i18n).
+signal language_changed(locale: String)

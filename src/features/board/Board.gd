@@ -79,14 +79,14 @@ func get_tower_at(cell: Vector2i) -> Node2D:
 
 func try_place_tower(tower_type: String, cell: Vector2i) -> bool:
 	if not is_buildable(cell):
-		EventBus.action_feedback.emit("Casilla no disponible")
+		EventBus.action_feedback.emit(tr(&"TOAST_CELL_UNAVAILABLE"))
 		return false
 	var catalog_entry: Dictionary = Constants.TOWER_CATALOG.get(tower_type, {}) as Dictionary
 	if catalog_entry.is_empty():
 		return false
 	var cost: int = int(catalog_entry.get("cost", 0))
 	if not GameManager.spend_gold(cost):
-		EventBus.action_feedback.emit("Oro insuficiente")
+		EventBus.action_feedback.emit(tr(&"TOAST_INSUFFICIENT_GOLD"))
 		return false
 	var tower_script: GDScript = TOWER_SCRIPTS.get(tower_type) as GDScript
 	if tower_script == null:
@@ -129,7 +129,7 @@ func _on_tower_upgrade_requested(cell: Vector2i) -> void:
 	if upgrade_tower_at(cell):
 		_emit_tower_selected(cell)  ## refresca el panel con el nuevo nivel/costos.
 	else:
-		EventBus.action_feedback.emit("No se pudo mejorar")
+		EventBus.action_feedback.emit(tr(&"TOAST_UPGRADE_FAILED"))
 
 
 func _on_tower_sell_requested(cell: Vector2i) -> void:
@@ -138,7 +138,7 @@ func _on_tower_sell_requested(cell: Vector2i) -> void:
 			_selected_cell = NONE_CELL
 		EventBus.tower_deselected.emit()
 	else:
-		EventBus.action_feedback.emit("No se pudo vender")
+		EventBus.action_feedback.emit(tr(&"TOAST_SELL_FAILED"))
 
 
 func _unhandled_input(event: InputEvent) -> void:

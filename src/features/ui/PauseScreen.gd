@@ -51,15 +51,15 @@ func _build_ui() -> void:
 	vbox.add_child(icon)
 
 	var title: Label = Label.new()
-	title.text = "PAUSA"
+	title.text = "TITLE_PAUSE"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override(&"font_size", 22)
 	title.add_theme_color_override(&"font_color", Constants.COLOR_HUD_TEXT)
 	vbox.add_child(title)
 
-	vbox.add_child(_make_button("Continuar", _on_resume_pressed))
-	vbox.add_child(_make_button("Reiniciar", _on_restart_pressed))
-	vbox.add_child(_make_button("Menu Principal", _on_menu_pressed))
+	vbox.add_child(_make_button("BTN_RESUME", _on_resume_pressed))
+	vbox.add_child(_make_button("BTN_RESTART", _on_restart_pressed))
+	vbox.add_child(_make_button("BTN_MAIN_MENU", _on_menu_pressed))
 
 
 func _make_button(text: String, handler: Callable) -> Button:

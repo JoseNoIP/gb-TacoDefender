@@ -27,11 +27,9 @@ const TOAST_SLIDE_OFFSET: float = 10.0
 ## recolección de gemas — sus 3 mecánicas nuevas son "construir", "iniciar oleada" y
 ## "mejorar/vender", así que se documentan como 3 mensajes estáticos en vez de una escena
 ## de tutorial separada con estados que esperan señales de sistemas que este juego no tiene.
-const FTUE_MESSAGES: Array = [
-	"Toca un ingrediente abajo y luego una casilla libre del camino para construir una torre.",
-	"Cuando estes listo, toca INICIAR OLEADA (o espera 5s). Arrastra para ver mas del camino.",
-	"Toca una torre construida para ver su rango, mejorarla o venderla. Defiende la barra!",
-]
+## Keys de traducción (ver /mobile-i18n), no texto de display -- tr() se aplica donde se
+## consumen (_build_ftue_overlay/_on_ftue_button_pressed).
+const FTUE_MESSAGE_KEYS: Array = ["FTUE_1", "FTUE_2", "FTUE_3"]
 
 var _gold_label: Label = Label.new()
 var _wave_label: Label = Label.new()
@@ -133,7 +131,7 @@ func _build_top_bar() -> void:
 	_wave_label.position = Vector2(16.0, 54.0)
 	_wave_label.set_size(Vector2(240.0, 26.0))
 	_style_label(_wave_label, Constants.COLOR_HUD_TEXT)
-	_wave_label.text = "Oleada 0/%d" % Constants.TOTAL_WAVES
+	_wave_label.text = tr(&"LABEL_WAVE") % [0, Constants.TOTAL_WAVES]
 	add_child(_wave_label)
 
 	## _hp_label queda alineado a la derecha dentro de su propia caja, así que el ícono se
@@ -167,7 +165,7 @@ func _build_bottom_bar() -> void:
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bar)
 
-	_start_wave_button.text = "INICIAR OLEADA"
+	_start_wave_button.text = "BTN_START_WAVE"
 	_start_wave_button.position = Vector2(20.0, bar_top + 6.0)
 	_start_wave_button.set_size(Vector2(Constants.DESIGN_WIDTH - 40.0, 34.0))
 	_start_wave_button.pressed.connect(_on_start_wave_pressed)
@@ -196,7 +194,7 @@ func _build_bottom_bar() -> void:
 		button.add_child(icon)
 
 		var label: Label = Label.new()
-		label.text = "%s\n$%d" % [String(data.get("name", "")), int(data.get("cost", 0))]
+		label.text = "%s\n$%d" % [tr(String(data.get("name", ""))), int(data.get("cost", 0))]
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.add_theme_font_size_override(&"font_size", 13)
 		label.add_theme_color_override(&"font_color", Constants.COLOR_HUD_TEXT)
@@ -270,7 +268,7 @@ func _build_selection_panel() -> void:
 	buttons_row.add_child(_selection_sell_button)
 
 	var close_button: Button = Button.new()
-	close_button.text = "Cerrar"
+	close_button.text = "BTN_CLOSE"
 	close_button.custom_minimum_size = Vector2(0.0, 32.0)
 	close_button.pressed.connect(_on_close_selection_pressed)
 	vbox.add_child(close_button)
@@ -297,7 +295,7 @@ func _build_ftue_overlay() -> void:
 	_ftue_panel.add_child(vbox)
 
 	var title: Label = Label.new()
-	title.text = "Como jugar"
+	title.text = "FTUE_TITLE"
 	title.add_theme_font_size_override(&"font_size", 22)
 	title.add_theme_color_override(&"font_color", Constants.COLOR_HUD_TEXT)
 	vbox.add_child(title)
@@ -310,13 +308,13 @@ func _build_ftue_overlay() -> void:
 	## fuerza el cálculo de tamaño mínimo a asumir que el texto SÍ puede cortarse en
 	## palabras, resolviendo la causa raíz (no solo el síntoma).
 	_ftue_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_ftue_label.text = String(FTUE_MESSAGES[0])
+	_ftue_label.text = tr(StringName(FTUE_MESSAGE_KEYS[0]))
 	_ftue_label.add_theme_font_size_override(&"font_size", Constants.UI_MIN_FONT_SIZE)
 	_ftue_label.add_theme_color_override(&"font_color", Constants.COLOR_HUD_TEXT)
 	_ftue_label.custom_minimum_size = Vector2(panel_w - 32.0, 110.0)
 	vbox.add_child(_ftue_label)
 
-	_ftue_button.text = "Siguiente"
+	_ftue_button.text = "BTN_NEXT"
 	_ftue_button.custom_minimum_size = Vector2(0.0, 40.0)
 	_ftue_button.pressed.connect(_on_ftue_button_pressed)
 	vbox.add_child(_ftue_button)
@@ -343,12 +341,12 @@ func _on_base_health_changed(current: int, maximum: int) -> void:
 
 
 func _on_wave_started(wave_number: int) -> void:
-	_wave_label.text = "Oleada %d/%d" % [wave_number, Constants.TOTAL_WAVES]
+	_wave_label.text = tr(&"LABEL_WAVE") % [wave_number, Constants.TOTAL_WAVES]
 	_start_wave_button.visible = false
 
 
 func _on_wave_intermission_started(next_wave_number: int, _auto_start_delay: float) -> void:
-	_wave_label.text = "Oleada %d/%d — preparate" % [next_wave_number, Constants.TOTAL_WAVES]
+	_wave_label.text = tr(&"LABEL_WAVE_PREPARE") % [next_wave_number, Constants.TOTAL_WAVES]
 	_start_wave_button.visible = true
 
 
@@ -371,20 +369,20 @@ func _on_tower_selected(info: Dictionary) -> void:
 	var max_level: int = int(info.get("max_level", Constants.TOWER_MAX_LEVEL))
 	var catalog_entry: Dictionary = Constants.TOWER_CATALOG.get(tower_type, {}) as Dictionary
 	_selection_icon.texture = load("res://assets/sprites/towers/%s.png" % tower_type)
-	_selection_title.text = (
-		"%s — Nivel %d/%d" % [String(catalog_entry.get("name", tower_type)), level, max_level]
-	)
+	var tower_name: String = tr(String(catalog_entry.get("name", tower_type)))
+	var level_text: String = tr(&"LABEL_LEVEL") % [level, max_level]
+	_selection_title.text = "%s — %s" % [tower_name, level_text]
 	_selection_stats.text = (
-		"Dano: %.0f   Rango: %.0f" % [float(info.get("damage", 0.0)), float(info.get("range", 0.0))]
+		tr(&"LABEL_TOWER_STATS") % [float(info.get("damage", 0.0)), float(info.get("range", 0.0))]
 	)
 
 	var can_upgrade: bool = bool(info.get("can_upgrade", false))
 	_selection_upgrade_button.disabled = not can_upgrade
 	if can_upgrade:
-		_selection_upgrade_button.text = "Mejorar ($%d)" % int(info.get("upgrade_cost", 0))
+		_selection_upgrade_button.text = tr(&"BTN_UPGRADE_COST") % int(info.get("upgrade_cost", 0))
 	else:
-		_selection_upgrade_button.text = "Nivel maximo"
-	_selection_sell_button.text = "Vender ($%d)" % int(info.get("sell_value", 0))
+		_selection_upgrade_button.text = tr(&"LABEL_MAX_LEVEL")
+	_selection_sell_button.text = tr(&"BTN_SELL_COST") % int(info.get("sell_value", 0))
 	_selection_panel.show()
 
 
@@ -431,10 +429,10 @@ func _play_toast_tween(
 
 func _on_ftue_button_pressed() -> void:
 	_ftue_step += 1
-	if _ftue_step >= FTUE_MESSAGES.size():
+	if _ftue_step >= FTUE_MESSAGE_KEYS.size():
 		_ftue_panel.hide()
 		SaveManager.set_tutorial_shown(true)
 		return
-	_ftue_label.text = String(FTUE_MESSAGES[_ftue_step])
-	if _ftue_step == FTUE_MESSAGES.size() - 1:
-		_ftue_button.text = "Entendido"
+	_ftue_label.text = tr(StringName(FTUE_MESSAGE_KEYS[_ftue_step]))
+	if _ftue_step == FTUE_MESSAGE_KEYS.size() - 1:
+		_ftue_button.text = "BTN_GOT_IT"

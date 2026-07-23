@@ -45,3 +45,15 @@ func get_sound_enabled() -> bool:
 func set_sound_enabled(value: bool) -> void:
 	_data["sound_enabled"] = value
 	save()
+
+
+# --- Idioma (ver /mobile-i18n) ---
+## "" significa "todavía no elegido" -- LocalizationManager usa esto para decidir si
+## mostrar LanguageSelectScreen en el primer arranque.
+func get_language() -> String:
+	return _data.get("language", "")
+
+
+func set_language(value: String) -> void:
+	_data["language"] = value
+	save()

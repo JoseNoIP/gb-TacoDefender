@@ -29,6 +29,8 @@ Constants="*res://src/core/Constants.gd"
 EventBus="*res://src/core/EventBus.gd"
 GameManager="*res://src/core/GameManager.gd"
 SaveManager="*res://src/core/SaveManager.gd"
+; LocalizationManager lee SaveManager.get_language() en _ready() -- debe ir DESPUES.
+LocalizationManager="*res://src/core/LocalizationManager.gd"
 MetaManager="*res://src/core/MetaManager.gd"
 AudioManager="*res://src/features/audio/AudioManager.gd"
 

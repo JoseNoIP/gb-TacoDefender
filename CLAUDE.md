@@ -273,8 +273,9 @@ Detalle completo (arquitectura, asunciones, pendientes) en `idea-base.md` — re
   `enemies/`, `meta/`, `ui/`, `audio/` en vez de `player/`, `powerups/`, `gems/` (carpetas
   del template removidas por no aplicar a este juego).
 - Sin capas de física en absoluto — targeting y AoE usan grupos (`&"enemies"`) + distancia.
-- Gates verdes: `gdlint src/ tests/` (0 errores), GUT 100/100 tests (348 asserts),
-  `--export-debug "Android"` (BUILD SUCCESSFUL, APK ~89MB).
+- Multi-idioma: es (default), en, pt_BR, fr — ver `/mobile-i18n` e idea-base.md.
+- Gates verdes: `gdlint src/ tests/` (0 errores), GUT 106/106 tests (367 asserts),
+  `--export-debug "Android"` (BUILD SUCCESSFUL, APK ~91MB).
 
 ### Señales clave en EventBus
 
@@ -294,6 +295,7 @@ Detalle completo (arquitectura, asunciones, pendientes) en `idea-base.md` — re
 | `tips_changed` / `meta_upgrade_purchased` | MetaManager | MainMenu, UpgradeScreen |
 | `action_feedback(message)` | Board/UpgradeScreen | HUD (toast) |
 | `sound_setting_changed(enabled)` | SettingsScreen | AudioManager |
+| `language_changed(locale)` | LocalizationManager | MainMenu, UpgradeScreen (refrescan texto con `tr()`) |
 
 ### Referencia Rápida del GDD
 
@@ -308,15 +310,18 @@ torres y las 10 oleadas. Única fuente de verdad en código: `src/core/Constants
 | Constants | `src/core/Constants.gd` | Constantes tipadas (GDD) — sin lógica. |
 | EventBus | `src/core/EventBus.gd` | Señales cross-feature. |
 | GameManager | `src/core/GameManager.gd` | Estado de partida: oro, vida de base, oleada, pausa. |
-| SaveManager | `src/core/SaveManager.gd` | `user://save.json` — tutorial_shown, sound_enabled. |
+| SaveManager | `src/core/SaveManager.gd` | `user://save.json` — tutorial_shown, sound_enabled, language. |
+| LocalizationManager | `src/core/LocalizationManager.gd` | Parsea `assets/translations/translations.txt`, setea TranslationServer.set_locale(). Carga DESPUÉS de SaveManager. |
 | MetaManager | `src/core/MetaManager.gd` | `user://meta.json` — propinas, 5 mejoras permanentes, best_wave, victorias. |
 | AudioManager | `src/features/audio/AudioManager.gd` | SFX/música — stub funcional, reacciona a EventBus. |
 
 ### Skills y Agentes Disponibles
 
 `/new-game` (este build), `/validate`, `/feature`, `/doc`, `/gen-ai-art`, `/android-deploy`,
-`/mobile-i18n` (no usado en este juego — ver Pendientes). Agentes: `godot-architect`,
-`godot-qa`, `game-designer`, `game-feel` (`.claude/.agents/`).
+`/mobile-i18n` (implementado — es/en/pt_BR/fr, ver idea-base.md sección Arquitectura).
+Agentes: `godot-architect`, `godot-qa`, `game-designer` (checklist adaptado a tower
+defense — ver el archivo, no el genérico de survivor-shooter del template), `game-feel`
+(`.claude/.agents/`).
 
 ### Pendientes Documentados
 

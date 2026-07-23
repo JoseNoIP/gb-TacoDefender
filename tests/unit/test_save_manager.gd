@@ -22,3 +22,12 @@ func test_sound_enabled_roundtrip() -> void:
 	SaveManager.set_sound_enabled(true)
 	assert_true(SaveManager.get_sound_enabled())
 	SaveManager.set_sound_enabled(original)
+
+
+func test_language_roundtrip() -> void:
+	var original: String = SaveManager.get_language()
+	SaveManager.set_language("en")
+	assert_eq(SaveManager.get_language(), "en")
+	SaveManager.set_language("fr")
+	assert_eq(SaveManager.get_language(), "fr")
+	SaveManager.set_language(original)
