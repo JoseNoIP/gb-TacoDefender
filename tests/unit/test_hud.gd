@@ -15,12 +15,12 @@ func before_each() -> void:
 
 func test_gold_changed_updates_label_text() -> void:
 	EventBus.gold_changed.emit(250)
-	assert_eq((_hud.get(&"_gold_label") as Label).text, "Oro: $250")
+	assert_eq((_hud.get(&"_gold_label") as Label).text, "$250")
 
 
 func test_base_health_changed_updates_label_text() -> void:
 	EventBus.base_health_changed.emit(2, 5)
-	assert_eq((_hud.get(&"_hp_label") as Label).text, "Vida: 2/5")
+	assert_eq((_hud.get(&"_hp_label") as Label).text, "2/5")
 
 
 func test_wave_started_hides_start_wave_button() -> void:
