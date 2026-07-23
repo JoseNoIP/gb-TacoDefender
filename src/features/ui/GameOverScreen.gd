@@ -7,6 +7,8 @@ signal restart_requested
 signal main_menu_requested
 
 const ModalStyleGd := preload("res://src/shared/modal_style.gd")
+const IconStyleGd := preload("res://src/shared/icon_style.gd")
+const ICON_SIZE: float = 64.0
 
 var _panel: PanelContainer = PanelContainer.new()
 var _stats_label: Label = Label.new()
@@ -27,7 +29,7 @@ func _exit_tree() -> void:
 
 func _build_ui() -> void:
 	var panel_w: float = 280.0
-	var panel_h: float = 260.0
+	var panel_h: float = 320.0
 	_panel.position = Vector2(
 		(Constants.DESIGN_WIDTH - panel_w) * 0.5, (Constants.DESIGN_HEIGHT - panel_h) * 0.5
 	)
@@ -38,6 +40,11 @@ func _build_ui() -> void:
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.add_theme_constant_override(&"separation", 12)
 	_panel.add_child(vbox)
+
+	var icon: TextureRect = IconStyleGd.make_icon("res://assets/sprites/ui/broken_heart.png")
+	icon.custom_minimum_size = Vector2(ICON_SIZE, ICON_SIZE)
+	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	vbox.add_child(icon)
 
 	var title: Label = Label.new()
 	title.text = "LA TAQUERIA CAYO"

@@ -8,6 +8,7 @@ extends CanvasLayer
 ## porque Constants.TOWER_TYPE_* ya coincide 1:1 con el nombre de archivo.
 
 const ModalStyleGd := preload("res://src/shared/modal_style.gd")
+const IconStyleGd := preload("res://src/shared/icon_style.gd")
 
 const TOWER_BUTTON_WIDTH: float = 110.0
 const TOWER_BUTTON_HEIGHT: float = 94.0
@@ -108,7 +109,7 @@ func _build_top_bar() -> void:
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bar)
 
-	var coin_icon: TextureRect = _make_icon("res://assets/sprites/ui/coin.png")
+	var coin_icon: TextureRect = IconStyleGd.make_icon("res://assets/sprites/ui/coin.png")
 	coin_icon.position = Vector2(16.0, 25.0)
 	coin_icon.set_size(Vector2(TOP_BAR_ICON_SIZE, TOP_BAR_ICON_SIZE))
 	add_child(coin_icon)
@@ -128,7 +129,7 @@ func _build_top_bar() -> void:
 	## ubica ANTES de esa caja (mismo borde derecho final que antes: DESIGN_WIDTH - 16).
 	var hp_box_width: float = 154.0
 	var hp_box_x: float = Constants.DESIGN_WIDTH - 16.0 - hp_box_width
-	var heart_icon: TextureRect = _make_icon("res://assets/sprites/ui/heart.png")
+	var heart_icon: TextureRect = IconStyleGd.make_icon("res://assets/sprites/ui/heart.png")
 	heart_icon.position = Vector2(hp_box_x, 25.0)
 	heart_icon.set_size(Vector2(TOP_BAR_ICON_SIZE, TOP_BAR_ICON_SIZE))
 	add_child(heart_icon)
@@ -176,7 +177,9 @@ func _build_bottom_bar() -> void:
 		button.pressed.connect(_on_tower_button_pressed.bind(tower_type))
 		add_child(button)
 
-		var icon: TextureRect = _make_icon("res://assets/sprites/towers/%s.png" % tower_type)
+		var icon: TextureRect = IconStyleGd.make_icon(
+			"res://assets/sprites/towers/%s.png" % tower_type
+		)
 		icon.position = Vector2((TOWER_BUTTON_WIDTH - TOWER_BUTTON_ICON_SIZE) * 0.5, 6.0)
 		icon.set_size(Vector2(TOWER_BUTTON_ICON_SIZE, TOWER_BUTTON_ICON_SIZE))
 		button.add_child(icon)
@@ -314,18 +317,6 @@ func _build_ftue_overlay() -> void:
 func _style_label(label: Label, color: Color) -> void:
 	label.add_theme_font_size_override(&"font_size", Constants.UI_MIN_FONT_SIZE)
 	label.add_theme_color_override(&"font_color", color)
-
-
-## expand_mode=EXPAND_IGNORE_SIZE es obligatorio -- sin esto, TextureRect ignora
-## set_size()/custom_minimum_size y se dibuja al tamaño nativo del sprite (2x el render
-## en juego, regla CLAUDE.md #62), pisando cualquier texto/ícono vecino.
-func _make_icon(texture_path: String) -> TextureRect:
-	var icon: TextureRect = TextureRect.new()
-	icon.texture = load(texture_path)
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return icon
 
 
 func _on_gold_changed(new_amount: int) -> void:
