@@ -28,6 +28,11 @@ func _ready() -> void:
 	_music_player.name = &"MusicPlayer"
 	_music_player.bus = &"Master"
 	_music_player.volume_db = -8.0  ## fondo discreto — no debe competir con los SFX.
+	## Loop manual en vez de depender de loop_mode en el .import de music_loop.wav: los
+	## .import están en .gitignore (regla CLAUDE.md sección Android CI/CD, se regeneran
+	## con --editor --quit) y por default un WAV importa con loop deshabilitado — sin
+	## esto la música sonaría una sola vez y quedaría en silencio el resto de la partida.
+	_music_player.finished.connect(_on_music_finished)
 	add_child(_music_player)
 	EventBus.sound_setting_changed.connect(_on_sound_setting_changed)
 	EventBus.tower_placed.connect(_on_tower_placed)
@@ -68,6 +73,14 @@ func play_music() -> void:
 
 func stop_music() -> void:
 	_music_player.stop()
+
+
+## AudioStreamPlayer.stop() NUNCA emite `finished` (solo dispara al llegar al final
+## natural del clip) -- parar música a propósito (victoria/derrota/config) no reinicia
+## el loop por accidente.
+func _on_music_finished() -> void:
+	if SaveManager.get_sound_enabled():
+		_music_player.play()
 
 
 func _on_sound_setting_changed(enabled: bool) -> void:
