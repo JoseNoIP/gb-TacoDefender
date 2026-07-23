@@ -2,6 +2,12 @@ extends GutTest
 ## Tests para EnemyBase (movimiento por waypoints, daño, ralentización, progreso). Usa
 ## enemy_basic.gd como concreción mínima — EnemyBase no se instancia directo (sin stats
 ## propios, ver CLAUDE.md #13: subtipos heredan por ruta).
+##
+## HP/recompensa efectivos dependen de MetaManager.get_victories() (escalado por
+## repetición, fuera del GDD — ver Constants.gd) — igual que test_game_manager.gd deriva
+## _expected_base_hp_max() del MetaManager real en vez de asumir un guardado vacío (mismo
+## espíritu que la regla CLAUDE.md #57), acá se deriva el HP/recompensa esperados con la
+## MISMA fórmula que EnemyBase._ready(), nunca se asume Constants.ENEMY_BASIC_HP a secas.
 
 const EnemyBasicGd := preload("res://src/features/enemies/enemy_basic.gd")
 
@@ -13,6 +19,22 @@ func before_each() -> void:
 	add_child_autofree(_enemy)
 
 
+func _expected_max_health() -> float:
+	var victories: int = mini(MetaManager.get_victories(), Constants.ENEMY_VICTORY_SCALING_CAP)
+	return (
+		Constants.ENEMY_BASIC_HP * (1.0 + float(victories) * Constants.ENEMY_HP_BONUS_PER_VICTORY)
+	)
+
+
+func _expected_reward() -> int:
+	var victories: int = mini(MetaManager.get_victories(), Constants.ENEMY_VICTORY_SCALING_CAP)
+	var scaled: float = (
+		float(Constants.ENEMY_BASIC_REWARD)
+		* (1.0 + float(victories) * Constants.ENEMY_REWARD_BONUS_PER_VICTORY)
+	)
+	return int(round(scaled))
+
+
 func test_setup_positions_enemy_at_first_waypoint() -> void:
 	var waypoints: Array = [Vector2(10.0, 20.0), Vector2(100.0, 20.0)]
 	_enemy.setup(waypoints, 90.0)
@@ -21,26 +43,26 @@ func test_setup_positions_enemy_at_first_waypoint() -> void:
 
 func test_setup_resets_health_to_max() -> void:
 	_enemy.setup([Vector2.ZERO, Vector2(100.0, 0.0)], 100.0)
-	assert_almost_eq(_enemy.get_health(), Constants.ENEMY_BASIC_HP, 0.001)
+	assert_almost_eq(_enemy.get_health(), _expected_max_health(), 0.001)
 
 
 func test_take_damage_reduces_health() -> void:
 	_enemy.setup([Vector2.ZERO, Vector2(100.0, 0.0)], 100.0)
 	_enemy.take_damage(3.0)
-	assert_almost_eq(_enemy.get_health(), Constants.ENEMY_BASIC_HP - 3.0, 0.001)
+	assert_almost_eq(_enemy.get_health(), _expected_max_health() - 3.0, 0.001)
 
 
 func test_take_damage_ignores_non_positive_amount() -> void:
 	_enemy.setup([Vector2.ZERO, Vector2(100.0, 0.0)], 100.0)
 	_enemy.take_damage(0.0)
 	_enemy.take_damage(-5.0)
-	assert_almost_eq(_enemy.get_health(), Constants.ENEMY_BASIC_HP, 0.001)
+	assert_almost_eq(_enemy.get_health(), _expected_max_health(), 0.001)
 
 
 func test_lethal_damage_emits_enemy_destroyed_with_reward() -> void:
 	_enemy.setup([Vector2.ZERO, Vector2(100.0, 0.0)], 100.0)
 	watch_signals(EventBus)
-	_enemy.take_damage(Constants.ENEMY_BASIC_HP + 100.0)
+	_enemy.take_damage(_expected_max_health() + 100.0)
 	assert_signal_emitted(EventBus, "enemy_destroyed")
 
 
@@ -81,4 +103,4 @@ func test_get_progress_increases_after_moving() -> void:
 
 
 func test_get_reward_matches_constants() -> void:
-	assert_eq(_enemy.get_reward(), Constants.ENEMY_BASIC_REWARD)
+	assert_eq(_enemy.get_reward(), _expected_reward())

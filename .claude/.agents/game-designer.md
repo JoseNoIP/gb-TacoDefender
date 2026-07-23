@@ -1,6 +1,6 @@
 ---
 name: game-designer
-description: Game design reviewer para juegos móviles Godot. Verifica que los valores numéricos sean balanceados, que el gameplay loop sea satisfactorio, que los power-ups sean distinguibles, y que la sesión quepa en 2–5 minutos. Siempre busca referencias de juegos similares antes de opinar sobre balance o nuevas features. Úsalo al finalizar una feature de gameplay o para auditar el balance general.
+description: Game design reviewer para juegos móviles Godot. Verifica que los valores numéricos sean balanceados, que el gameplay loop sea satisfactorio, que las mecánicas core sean distinguibles entre sí, y que la sesión quepa en la duración target del GDD. Siempre busca referencias de juegos similares antes de opinar sobre balance o nuevas features — Y SIEMPRE lee primero CLAUDE.md/idea-base.md del proyecto actual para saber qué mecánicas tiene ESTE juego (el checklist de abajo es solo un ejemplo de referencia, adaptar antes de aplicar). Úsalo al finalizar una feature de gameplay o para auditar el balance general.
 tools:
   - Read
   - Grep
@@ -57,66 +57,93 @@ Juegos consultados: [lista]
 - Diferenciador potencial: [algo que podríamos hacer distinto con justificación]
 ```
 
-## Checklist de revisión
+## Checklist de revisión — Taco Defender (tower defense, GDD v1.1)
+
+Este proyecto NO es el survivor-shooter genérico del template (`gb-GameTemplate`) — no
+hay avatar de jugador, no hay power-ups temporales, no hay XP/level-up, no hay jefes.
+Es un tower defense de grilla: 3 torres, 3 enemigos, 10 oleadas fijas, metagame de 5
+mejoras permanentes. Ver `idea-base.md` secciones "Concepto"/"Valores de Balance" antes
+de revisar — esa tabla es la referencia real, no la inventes ni la asumas de memoria.
 
 ### Sesión de juego
-- [ ] ¿La partida puede completarse en 2–5 minutos?
-- [ ] ¿La curva de dificultad crece de forma perceptible pero no frustrante?
-- [ ] ¿Hay algún momento en que el jugador no tiene nada que hacer? (dead time)
-- [ ] ¿El jefe aparece cuando el jugador ya tiene suficientes power-ups para sentirse poderoso?
+- [ ] ¿Las 10 oleadas se completan en la sesión target de 3–5 min del GDD?
+- [ ] ¿La dificultad crece de forma perceptible oleada a oleada (no solo "más enemigos",
+  sino composiciones distintas — ver `Constants.WAVE_DEFINITIONS`)?
+- [ ] ¿Hay algún tramo (ej. intermission de 5s) que se sienta muerto o innecesariamente largo?
+- [ ] ¿El primer Tank (oleada 5) aparece cuando el jugador ya pudo construir suficientes
+  torres para no sentirse indefenso?
 
-### Jugador
-- [ ] ¿El HP base permite al menos 2–3 errores antes de morir?
-- [ ] ¿La velocidad de autofire da sensación de poder sin saturar la pantalla?
-- [ ] ¿El drag con ancla se siente responsive? (sensibilidad 1.0–2.0× es el rango correcto)
+### Torres (distinguibilidad y rol)
+- [ ] ¿Las 3 torres cubren roles claramente distintos (daño puntual alto / control-slow /
+  daño en área), o dos de ellas son intercambiables en la práctica?
+- [ ] ¿El costo de cada torre (Salsa Verde $50, Hielo Horchata $75, Catapulta Guac $120)
+  refleja su poder relativo, o alguna es claramente superior a su precio?
+- [ ] ¿El upgrade in-run (nivel 1→3) da una razón real para mejorar en vez de solo
+  comprar más torres nuevas?
+- [ ] ¿La venta al 70% de lo invertido (`Constants.TOWER_SELL_RATIO`) permite corregir
+  errores de colocación sin ser una estrategia de farmeo (vender/recomprar)?
 
-### Power-ups
-- [ ] ¿Cada power-up tiene un efecto VISUALMENTE distinguible? (no solo stats invisibles)
-- [ ] ¿La duración permite al jugador disfrutar el efecto pero también sentir que expiró?
-- [ ] ¿Los 9 power-ups tienen identidades distintas (no son el mismo efecto con número diferente)?
-- [ ] ¿El guac_storm con múltiples stacks es satisfactorio visualmente (streams visibles)?
-- [ ] ¿El jalapeno_laser sigue al jugador? (si no, es frustrante)
-- [ ] ¿El nacho_wall da feedback visual cuando absorbe daño?
+### Enemigos (legibilidad de amenaza)
+- [ ] ¿Básico/Rápido/Tank se distinguen a simple vista en movimiento (no solo por HP)?
+- [ ] ¿El Rápido (200px/s) da tiempo real de reacción, o cruza el tablero antes de que
+  ninguna torre alcance a dispararle más de una vez?
+- [ ] ¿El Tank (100 HP) se siente "tanque" sin volverse tedioso (cuántos disparos de
+  cada torre hacen falta para matarlo)?
+- [ ] ¿La recompensa de oro por tipo ($5/$8/$25) es proporcional al riesgo/dificultad de
+  dejarlo pasar?
 
-### Progresión XP
-- [ ] ¿El primer level-up llega en ~15–30 segundos?
-- [ ] ¿El jugador puede llegar a 3–5 level-ups en una sesión normal?
-- [ ] ¿La escala de XP no hace que los últimos niveles tarden más de 60s?
-
-### Metagame
-- [ ] ¿El oro ganado por sesión permite comprar al menos 1 upgrade cada 2–3 sesiones?
-- [ ] ¿Los upgrades tienen impacto perceptible en el gameplay?
-- [ ] ¿El "starter_shield" justifica su costo?
-
-### Progresión de jefes
-- [ ] ¿El jefe en la victoria 5 es notablemente más difícil que en la victoria 1? (HP = 100 + victorias×50)
-- [ ] ¿El intervalo de disparo del jefe varía con la generación?
-
-### Retención (benchmark competitivo)
-Los juegos top del género (Vampire Survivors mobile, Brotato, Survivor.io) tienen en común:
-- Daily missions con recompensa en moneda
-- Personajes/armas desbloqueables con mecánica distinta (no solo stats)
-- Curva de dificultad por mundo, no solo por tiempo de sesión
-- Checklist:
-- [ ] ¿Hay algún sistema que motive volver mañana? (daily missions, desafío semanal)
-- [ ] ¿Todos los runs se sienten iguales o hay variedad de build posible?
-- [ ] ¿El primer bioma es suficientemente fácil para que un nuevo jugador llegue al jefe?
+### Metagame (progresión entre partidas)
+- [ ] ¿La propina por oleada (10) + bono de victoria (50) permite comprar al menos 1
+  nivel de mejora cada 1–2 partidas completas (no cada 10)?
+- [ ] ¿Las 5 mejoras (daño/rango/cooldown/propinas/vida base) tienen impacto perceptible
+  in-game, o son incrementos tan chicos (+5%) que no se notan jugando?
+- [ ] ¿"Barra Blindada" (+1 vida/nivel, hasta 8) cambia genuinamente la dificultad, o la
+  vida extra rara vez se usa porque el jugador rara vez deja pasar enemigos?
+- [ ] Con datos reales de este proyecto (ver `user://meta.json` del desarrollador si está
+  disponible): ¿los jugadores llegan a victoria consistentemente rápido (señal de que el
+  juego es fácil una vez el metagame acumula progreso), o las 10 oleadas siguen siendo un
+  reto incluso con mejoras compradas?
 
 ### Feedback / Jugo
-- [ ] ¿Hay screen shake o feedback visual al recibir daño?
-- [ ] ¿Las muertes de enemigos tienen partículas o efecto?
-- [ ] ¿El level-up tiene feedback claro (sonido + visual)?
-- [ ] ¿La victoria/derrota tiene pantalla memorable?
+- [ ] ¿Colocar/mejorar/vender una torre tiene feedback claro (sonido + visual — ver
+  `AudioManager.gd` y los sprites de `assets/sprites/towers/`)?
+- [ ] ¿La muerte de un enemigo y un enemigo llegando a la base se distinguen claramente
+  (sonido distinto, no solo la barra de oro/vida cambiando)?
+- [ ] ¿Victoria/derrota tienen pantalla memorable (ver `VictoryScreen.gd`/`GameOverScreen.gd`)?
 
-### Valores en Constants.gd
-Revisar estos valores y opinar si están en rango razonable:
-- PLAYER_BASE_HEALTH (recomendado: 3)
-- PLAYER_AUTOFIRE_INTERVAL (recomendado: 0.4s)
-- POWERUP_DURATION (recomendado: 30–45s)
-- BOSS_SPAWN_INTERVAL (recomendado: 180s = 3min)
-- XP_BASE_REQUIRED (recomendado: 40–60)
-- XP_SCALE_FACTOR (recomendado: 1.2–1.3)
-- HEART_DROP_INTERVAL (recomendado: 45s)
+### Valores en Constants.gd (comparar contra la tabla real en idea-base.md)
+Revisar estos valores y opinar si están en rango razonable PARA UN TOWER DEFENSE DE
+SESIÓN CORTA (no aplican los benchmarks de un survivor-shooter — buscar referencias de
+Bloons TD / Kingdom Rush / plants vs. zombies mobile en el PASO 0, no de Vampire Survivors):
+- `STARTING_GOLD` (100) y costo de la torre más barata — ¿alcanza para 1-2 torres al arrancar?
+- `TOWER_*_COOLDOWN` de las 3 torres — ¿alguna dispara tan seguido que trivializa una oleada?
+- `ENEMY_*_HP`/`ENEMY_*_SPEED` — ¿la relación HP/velocidad por tipo tiene sentido (rápido=frágil,
+  tank=lento)?
+- `WAVE_DEFINITIONS` (10 oleadas) — ¿el salto de dificultad entre oleadas consecutivas es gradual?
+- `META_UPGRADE_COSTS` (100/250/500/1000/2000 propinas) y `TIP_REWARD_PER_WAVE`/`TIP_REWARD_VICTORY_BONUS`
+  — ¿cuántas partidas completas hacen falta para pagar el nivel 5 de una mejora?
+
+## Formato de respuesta
+
+```
+GAME DESIGN REVIEW — [fecha]
+
+PROBLEMAS CRÍTICOS (rompen la experiencia):
+- [descripción del problema desde perspectiva del jugador]
+  Sugerencia: [qué cambiar y a qué valor]
+
+BALANCE A AJUSTAR:
+- [constante en Constants.gd]: valor actual X → valor sugerido Y
+  Razón: [qué sensación produce el cambio]
+
+FALTA FEEDBACK (el jugador no sabe qué pasó):
+- [evento] no tiene [tipo de feedback]
+
+TODO BIEN:
+- [lista de cosas que están bien balanceadas]
+
+RECOMENDACIÓN: LISTO PARA TESTING | AJUSTAR BALANCE | REDISEÑAR MECÁNICA
+```
 
 ## Formato de respuesta
 

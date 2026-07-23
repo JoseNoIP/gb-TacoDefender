@@ -21,8 +21,17 @@ var _slow_multiplier: float = 1.0
 var _slow_timer: float = 0.0
 
 
+## El subtipo (enemy_basic/fast/tank.gd) ya fijó _max_health/_reward ANTES de llamar
+## super._ready() al final de su propio _ready() -- así que acá ya están en su valor base
+## del GDD, y el escalado por repetición (Constants.ENEMY_HP_BONUS_PER_VICTORY, fuera del
+## GDD -- ver nota en Constants.gd) se aplica una sola vez, encima de eso.
 func _ready() -> void:
 	add_to_group(&"enemies")
+	var victories: int = mini(MetaManager.get_victories(), Constants.ENEMY_VICTORY_SCALING_CAP)
+	var hp_multiplier: float = 1.0 + float(victories) * Constants.ENEMY_HP_BONUS_PER_VICTORY
+	var reward_multiplier: float = 1.0 + float(victories) * Constants.ENEMY_REWARD_BONUS_PER_VICTORY
+	_max_health *= hp_multiplier
+	_reward = int(round(float(_reward) * reward_multiplier))
 
 
 ## Llamado por EnemySpawner justo después de add_child() (ver orden en

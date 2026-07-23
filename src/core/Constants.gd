@@ -81,6 +81,23 @@ const ENEMY_TANK_HP: float = 100.0
 const ENEMY_TANK_SPEED: float = 30.0
 const ENEMY_TANK_REWARD: int = 25
 
+## Escalado de dificultad por repetición -- NO viene del GDD (que no define ningún New
+## Game+), agregado a pedido explícito: sin esto, las 10 oleadas son IDÉNTICAS en cada
+## partida y las 5 mejoras permanentes solo buffean al jugador (nunca a los enemigos), así
+## que cada victoria hace la SIGUIENTE partida más fácil, sin ningún contrapeso —
+## MetaManager.get_victories() ya se leía para mostrar texto en MainMenu pero no afectaba
+## nada de gameplay. +15% HP y +15% recompensa de oro por victoria previa (enemigo más
+## duro debe seguir siendo rentable matarlo), tope de 5 victorias -- mismo patrón de "5
+## niveles" que ya usa el metagame (META_UPGRADE_MAX_LEVEL) y evita el problema de HP sin
+## techo que escala mal en tower defense con muchas rejugadas (ver investigación de
+## balance en la sesión: juegos que solo suman % por oleada sin cap terminan con HP de
+## millones). Aplicado en EnemyBase._ready(), DESPUÉS de que el subtipo fija _max_health/
+## _reward (mismo orden que ya usan enemy_basic.gd/enemy_fast.gd/enemy_tank.gd al llamar
+## super._ready() al final).
+const ENEMY_HP_BONUS_PER_VICTORY: float = 0.15
+const ENEMY_REWARD_BONUS_PER_VICTORY: float = 0.15
+const ENEMY_VICTORY_SCALING_CAP: int = 5
+
 # --- Torres: nivel máximo in-game (GDD sección 3: "hasta Nivel 3") ---
 const TOWER_MAX_LEVEL: int = 3
 
