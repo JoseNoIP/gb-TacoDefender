@@ -17,6 +17,9 @@ const TOWER_BUTTON_ICON_SIZE: float = 40.0
 const TOP_BAR_ICON_SIZE: float = 22.0
 const SELECTION_ICON_SIZE: float = 48.0
 const TOAST_DURATION: float = 1.6
+const TOAST_FADE_IN: float = 0.15
+const TOAST_FADE_OUT: float = 0.25
+const TOAST_SLIDE_OFFSET: float = 10.0
 
 ## FTUE ligero (adaptado — ver idea-base.md): a diferencia del FTUE interactivo del
 ## template (pensado para un juego de movimiento/disparo tipo GuacBlaster Survivor, con
@@ -37,6 +40,8 @@ var _pause_button: Button = Button.new()
 var _start_wave_button: Button = Button.new()
 var _toast_label: Label = Label.new()
 var _toast_timer: float = 0.0
+var _toast_rest_position: Vector2 = Vector2.ZERO
+var _toast_tween: Tween = null
 
 var _selection_panel: PanelContainer = PanelContainer.new()
 var _selection_icon: TextureRect = TextureRect.new()
@@ -92,13 +97,19 @@ func _exit_tree() -> void:
 		EventBus.tower_deselected.disconnect(_on_tower_deselected)
 	if EventBus.action_feedback.is_connected(_on_action_feedback):
 		EventBus.action_feedback.disconnect(_on_action_feedback)
+	## Un Tween en vuelo (toast a mitad de animación) no se limpia solo si este nodo se
+	## libera antes de que termine -- matarlo acá evita un ObjectDB huérfano, tanto en
+	## tests (add_child_autofree) como en una transición real de escena a mitad de un toast.
+	if _toast_tween != null and _toast_tween.is_valid():
+		_toast_tween.kill()
 
 
 func _process(delta: float) -> void:
 	if _toast_timer > 0.0:
 		_toast_timer -= delta
 		if _toast_timer <= 0.0:
-			_toast_label.hide()
+			_play_toast_tween(1.0, 0.0, TOAST_FADE_OUT, _toast_rest_position, _toast_rest_position)
+			_toast_tween.tween_callback(_toast_label.hide)
 
 
 func _build_top_bar() -> void:
@@ -199,11 +210,13 @@ func _build_bottom_bar() -> void:
 
 
 func _build_toast() -> void:
-	_toast_label.position = Vector2(20.0, Constants.HUD_TOP_HEIGHT + 8.0)
+	_toast_rest_position = Vector2(20.0, Constants.HUD_TOP_HEIGHT + 8.0)
+	_toast_label.position = _toast_rest_position
 	_toast_label.set_size(Vector2(Constants.DESIGN_WIDTH - 40.0, 32.0))
 	_toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_toast_label.add_theme_stylebox_override(&"normal", ModalStyleGd.opaque_panel())
 	_style_label(_toast_label, Constants.COLOR_HUD_TEXT)
+	_toast_label.modulate.a = 0.0
 	_toast_label.visible = false
 	add_child(_toast_label)
 
@@ -394,8 +407,26 @@ func _on_close_selection_pressed() -> void:
 
 func _on_action_feedback(message: String) -> void:
 	_toast_label.text = message
-	_toast_label.show()
 	_toast_timer = TOAST_DURATION
+	var start_position: Vector2 = _toast_rest_position - Vector2(0.0, TOAST_SLIDE_OFFSET)
+	_play_toast_tween(0.0, 1.0, TOAST_FADE_IN, start_position, _toast_rest_position)
+	_toast_label.show()
+
+
+## Un solo helper para entrada/salida -- mata cualquier tween en vuelo antes de arrancar
+## uno nuevo, para que dos toasts seguidos (ej. "Oro insuficiente" tapeado rápido) no
+## dejen animaciones superpuestas peleando por la misma propiedad.
+func _play_toast_tween(
+	alpha_from: float, alpha_to: float, duration: float, pos_from: Vector2, pos_to: Vector2
+) -> void:
+	if _toast_tween != null and _toast_tween.is_valid():
+		_toast_tween.kill()
+	_toast_label.modulate.a = alpha_from
+	_toast_label.position = pos_from
+	_toast_tween = create_tween()
+	_toast_tween.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	_toast_tween.tween_property(_toast_label, ^"modulate:a", alpha_to, duration)
+	_toast_tween.parallel().tween_property(_toast_label, ^"position", pos_to, duration)
 
 
 func _on_ftue_button_pressed() -> void:
