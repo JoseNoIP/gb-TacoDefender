@@ -91,12 +91,12 @@ func test_compute_camera_bounds_collapses_when_board_fits_on_screen() -> void:
 	assert_almost_eq(bounds.x, bounds.y, 0.01, msg)
 
 
-func test_compute_camera_bounds_gives_real_pan_range_for_this_board() -> void:
+func test_compute_camera_bounds_collapses_for_this_board() -> void:
 	var bounds: Vector2 = GridMathGd.compute_camera_bounds(
 		Constants.BOARD_HEIGHT,
 		Constants.DESIGN_HEIGHT,
 		Constants.HUD_TOP_HEIGHT,
 		Constants.BOTTOM_BAR_HEIGHT
 	)
-	var msg: String = "el tablero real (14 filas) no entra en pantalla — debe poder panearse"
-	assert_gt(bounds.y, bounds.x, msg)
+	var msg: String = "el tablero real (10 filas) ya entra en pantalla — no debe hacer falta pan"
+	assert_almost_eq(bounds.x, bounds.y, 0.01, msg)

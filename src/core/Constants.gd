@@ -20,16 +20,24 @@ const SUPPORTED_LOCALES: Array = ["es", "en", "pt_BR", "fr"]
 # --- Grid del tablero (GDD sección 3 y 4 — el camino fijo hacia la taquería) ---
 const TILE_SIZE: float = 60.0
 const GRID_COLS: int = 6
-const GRID_ROWS: int = 14
+## 10 filas (600px de tablero) para que TODO el camino, incluida la base, quepa dentro del
+## hueco visible entre el HUD superior y la barra inferior (604px) sin necesitar scroll —
+## antes eran 14 filas (840px), que dejaban las últimas 2 vueltas del zigzag y la propia
+## base tapadas por la barra inferior en la posición de cámara inicial (el drag las
+## revelaba, pero un jugador que nunca arrastra veía la base "recibir" enemigos que
+## parecían desaparecer detrás de la barra, y el Game Over tardaba en aparecer porque el
+## enemigo seguía caminando de verdad ahí atrás). Con 10 filas, compute_camera_bounds()
+## colapsa min/max al mismo punto (ver grid_math.gd) — el drag queda como no-op inofensivo,
+## no hace falta quitar ese control.
+const GRID_ROWS: int = 10
 const BOARD_WIDTH: float = GRID_COLS * TILE_SIZE
 const BOARD_HEIGHT: float = GRID_ROWS * TILE_SIZE
 
 ## Camino como lista de puntos de giro (columna, fila), 0-indexado. Todo tramo entre dos
 ## puntos consecutivos es horizontal o vertical (nunca diagonal) — grid_math.gd expande
 ## esto a la lista completa de celdas de camino. Spawn = primer punto; taquería/base =
-## último punto. Serpentea las 14 filas para darle propósito real al control de "drag para
-## desplazar cámara" del GDD sección 2 (el tablero completo, 840px de alto, no entra en
-## el área de juego visible entre el HUD superior y la barra inferior — hace falta pan).
+## último punto. Serpentea las 10 filas completas (mismo estilo de zigzag de 6 columnas
+## que antes, solo que más corto — ver nota de GRID_ROWS arriba).
 const PATH_TURN_CELLS: Array = [
 	Vector2i(0, 0),
 	Vector2i(5, 0),
@@ -41,11 +49,7 @@ const PATH_TURN_CELLS: Array = [
 	Vector2i(0, 6),
 	Vector2i(0, 8),
 	Vector2i(5, 8),
-	Vector2i(5, 10),
-	Vector2i(0, 10),
-	Vector2i(0, 12),
-	Vector2i(5, 12),
-	Vector2i(5, 13),
+	Vector2i(5, 9),
 ]
 
 # --- HUD / layout de UI (deja espacio fijo arriba y abajo del tablero) ---
@@ -70,18 +74,33 @@ const WAVE_AUTO_START_DELAY: float = 5.0
 const BASE_DAMAGE_PER_LEAK: int = 1
 const TOTAL_WAVES: int = 10
 
-# --- Enemigos: Básico / mosca común (GDD sección 3) ---
-const ENEMY_BASIC_HP: float = 10.0
+## Balance real (deviación intencional del GDD v1.1, a pedido explícito tras playtesting:
+## "el juego es demasiado fácil, fácilmente se puede derrotar a todos los enemigos en las
+## dos primeras filas" — documentado en idea-base.md e ítem "Vida (HP)" actualizado en
+## taco-defender-gdd.md, siguiendo el mismo criterio de la regla CLAUDE.md #63 de tratar
+## el GDD como punto de partida, no ley inmutable, cuando un hallazgo real de balance lo
+## justifica). Causa raíz real, no solo "muy pocas filas": con los valores originales
+## (Básico HP 10, Rápido HP 5), UNA sola Torre Salsa Verde recién comprada (daño 15) mataba
+## a ambos tipos de UN SOLO impacto — ninguna oleada temprana requería más de una torre ni
+## más de un ciclo de cooldown. Los nuevos valores están calculados contra el tiempo real
+## de tránsito por el rango de una torre (2×rango/velocidad) para que incluso una sola
+## Torre Salsa Verde (daño 15, cooldown 1.2s) necesite 2-3 impactos (no 1) para matar a un
+## Básico o un Rápido, obligando a combinar varias torres/oleadas de daño en vez de una
+## sola torre en la primera fila. Recompensas de oro NO cambian (siguen siendo del GDD) —
+## la oleada da el mismo oro total, solo tarda más en limpiarse.
+
+# --- Enemigos: Básico / mosca común (GDD sección 3, HP ajustado — ver nota arriba) ---
+const ENEMY_BASIC_HP: float = 35.0
 const ENEMY_BASIC_SPEED: float = 80.0
 const ENEMY_BASIC_REWARD: int = 5
 
-# --- Enemigos: Rápido / cucaracha veloz (GDD sección 3) ---
-const ENEMY_FAST_HP: float = 5.0
+# --- Enemigos: Rápido / cucaracha veloz (GDD sección 3, HP ajustado — ver nota arriba) ---
+const ENEMY_FAST_HP: float = 18.0
 const ENEMY_FAST_SPEED: float = 200.0
 const ENEMY_FAST_REWARD: int = 8
 
-# --- Enemigos: Tank / ratón de carga pesado (GDD sección 3) ---
-const ENEMY_TANK_HP: float = 100.0
+# --- Enemigos: Tank / ratón de carga pesado (GDD sección 3, HP ajustado — ver nota arriba) ---
+const ENEMY_TANK_HP: float = 220.0
 const ENEMY_TANK_SPEED: float = 30.0
 const ENEMY_TANK_REWARD: int = 25
 

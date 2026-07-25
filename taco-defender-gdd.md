@@ -34,9 +34,16 @@
 
 | Tipo | Vida (HP) | Velocidad | Recompensa | Apariencia Visual |
 | :--- | :--- | :--- | :--- | :--- |
-| **Básico** | 10 | 80 px/s | $5 | Mosca común |
-| **Rápido** | 5 | 200 px/s | $8 | Cucaracha veloz |
-| **Tank** | 100 | 30 px/s | $25 | Ratón de carga pesado |
+| **Básico** | 35 | 80 px/s | $5 | Mosca común |
+| **Rápido** | 18 | 200 px/s | $8 | Cucaracha veloz |
+| **Tank** | 220 | 30 px/s | $25 | Ratón de carga pesado |
+
+> **Nota de balance (post-v1.1):** los valores de HP originales (10 / 5 / 100) permitían
+> que una sola Torre Salsa Verde recién comprada matara de un impacto a un Básico o un
+> Rápido, sin necesitar ninguna otra torre ni ciclo de cooldown adicional — el feedback de
+> playtesting fue "el juego es demasiado fácil, se derrota todo en las dos primeras filas".
+> Se subió el HP para que incluso una sola torre necesite 2-3 impactos. Las recompensas de
+> oro no cambian. Ver `Constants.gd` (`ENEMY_*_HP`) e `idea-base.md`.
 
 ### Torres y Escalado In-Game (Upgrades)
 Las torres se pueden mejorar dentro de la partida hasta Nivel 3.
