@@ -162,3 +162,61 @@ generar un **refresh token** una sola vez con un intercambio OAuth2 manual.
 Una vez marcado todo esto, `git push` a `main` dispara Play Store (Internal Testing) y
 `workflow_dispatch` en el otro workflow manda un build de prueba a Dropbox cuando lo
 necesites.
+
+---
+
+## 6. Notas de la versión (release notes) para Play Store
+
+Cada vez que se pide "las notas de la versión", entregarlas en ESTE formato exacto — un
+bloque por idioma, delimitado por el código de locale entre `<` `>` como tag de apertura
+y cierre. Este formato es para pegar manualmente en el campo de "Notas de la versión" de
+cada idioma en Play Console al crear una versión — no es un formato que lea ningún
+script todavía (ver nota de automatización al final).
+
+```
+<en-US>
+Texto en inglés acá.
+</en-US>
+
+<es-419>
+Texto en español (Latinoamérica) acá.
+</es-419>
+
+<pt-BR>
+Texto en portugués (Brasil) acá.
+</pt-BR>
+
+<fr-FR>
+Texto en francés acá.
+</fr-FR>
+```
+
+### Mapeo idioma del juego -> código de locale de Play Console
+
+| `Constants.SUPPORTED_LOCALES` (in-game) | Código Play Console |
+|---|---|
+| `es` (default) | `es-419` (español latinoamericano — NO `es-ES`, el juego no usa vocabulario/gramática de España) |
+| `en` | `en-US` |
+| `pt_BR` | `pt-BR` |
+| `fr` | `fr-FR` |
+
+### Redactar las notas
+
+- Tono para el jugador final, NO changelog técnico — nada de nombres de archivo, nombres
+  de función, ni jerga de implementación (eso vive en `idea-base.md`/commits, no en la
+  tienda).
+- 3-6 líneas, una idea por línea. Priorizar lo que el jugador va a notar jugando, no
+  cambios internos sin impacto visible.
+- Mismo idioma/tono que la traducción in-game de cada locale (revisar
+  `assets/translations/translations.txt` de esa versión si hay dudas de vocabulario).
+
+### Automatización futura (no implementada todavía)
+
+La action `r0adkll/upload-google-play` (ya usada en `deploy-playstore.yml`) soporta un
+input `whatsNewDirectory` que apunta a una carpeta con un archivo de texto plano por
+locale (`whatsnew/en-US`, `whatsnew/es-419`, etc. — sin las etiquetas `<...>`, contenido
+crudo). Si en algún momento se quiere que el CI suba las notas automáticamente en vez de
+pegarlas a mano en Play Console, ese es el mecanismo — pero requeriría un paso extra en
+el workflow que parsee este formato de bloques y genere esos archivos, o mantenerlos
+directamente en ese formato de carpeta desde el vamos. Fuera de alcance hasta que se
+pida explícitamente.

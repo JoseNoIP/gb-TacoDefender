@@ -348,6 +348,9 @@ El AAB queda en: `android/build/app/build/outputs/bundle/standardRelease/*.aab`
 - **Track interno:** push a `main` → Internal Testing (sin revisión de Google).
 - **Producción:** tag `v*.*.*` → Production (pasa por revisión de Google).
 - El campo que ve el usuario en la tienda es `version/name` (ej. "1.0"), no `version/code`.
+- **Notas de la versión (release notes):** siempre en el formato `<locale>texto</locale>`
+  por idioma (ver `DEPLOYMENT.md` sección 6 del juego para el mapeo de locales y cómo
+  redactarlas) — nunca como changelog técnico.
 
 ---
 
