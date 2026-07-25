@@ -17,6 +17,16 @@ static func cell_to_local_center(cell: Vector2i) -> Vector2:
 	return Vector2(x, y)
 
 
+## Elige qué Constants.PATH_TEMPLATES[i] usa una partida nueva -- "victories" solo sube al
+## completar las 10 oleadas (GameManager._win_game()), así que perder nunca cambia el
+## tablero; ganar sí avanza al siguiente. Cicla con % para que la variedad visual no se
+## agote nunca, aunque el escalado de dificultad (ENEMY_VICTORY_SCALING_CAP) ya esté topado.
+static func select_path_template_index(victories: int, template_count: int) -> int:
+	if template_count <= 0:
+		return 0
+	return victories % template_count
+
+
 static func is_in_bounds(cell: Vector2i) -> bool:
 	var col_ok: bool = cell.x >= 0 and cell.x < Constants.GRID_COLS
 	var row_ok: bool = cell.y >= 0 and cell.y < Constants.GRID_ROWS

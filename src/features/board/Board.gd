@@ -13,17 +13,12 @@ const TOWER_SCRIPTS: Dictionary = {
 }
 const NONE_CELL: Vector2i = Vector2i(-1, -1)
 
-## Texturas tileables de piso (ver tools/gen_board_tiles.py) -- el camino en zigzag se
-## dibuja con la MISMA textura repetida celda a celda siguiendo _path_cells, así que su
-## forma real (el zigzag) es la que define dónde se ve "calle de piedra" en vez de
-## "tierra construible", en vez de un fondo escénico sin relación con la forma del camino.
-const PATH_TEXTURE: Texture2D = preload("res://assets/sprites/board/path_tile.png")
-const GROUND_TEXTURE: Texture2D = preload("res://assets/sprites/board/ground_tile.png")
-
 var _camera: Camera2D = Camera2D.new()
 var _path_cells: Dictionary = {}
+var _path_turn_cells: Array = []
 var _path_world_points: Array = []
 var _path_length: float = 0.0
+var _template_index: int = 0
 var _towers: Dictionary = {}  ## Vector2i -> Node2D (tower instance)
 var _pending_tower_type: String = ""
 var _selected_cell: Vector2i = NONE_CELL
@@ -34,11 +29,19 @@ var _is_dragging: bool = false
 var _accumulated_drag: float = 0.0
 
 
+## El template de camino/tema visual se elige UNA sola vez acá, según cuántas partidas
+## completas ("victorias") ya ganó el jugador -- ver la nota extensa en
+## Constants.PATH_TEMPLATES. Queda fijo el resto de la partida (nunca se recalcula en
+## medio de las 10 oleadas).
 func _ready() -> void:
 	position = Vector2((Constants.DESIGN_WIDTH - Constants.BOARD_WIDTH) * 0.5, 0.0)
 
-	_path_cells = GridMathGd.compute_path_cells(Constants.PATH_TURN_CELLS)
-	_path_world_points = GridMathGd.compute_path_world_points(Constants.PATH_TURN_CELLS)
+	_template_index = GridMathGd.select_path_template_index(
+		MetaManager.get_victories(), Constants.PATH_TEMPLATES.size()
+	)
+	_path_turn_cells = Constants.PATH_TEMPLATES[_template_index]
+	_path_cells = GridMathGd.compute_path_cells(_path_turn_cells)
+	_path_world_points = GridMathGd.compute_path_world_points(_path_turn_cells)
 	_path_length = GridMathGd.compute_path_length(_path_world_points)
 
 	var bounds: Vector2 = GridMathGd.compute_camera_bounds(
@@ -74,6 +77,14 @@ func get_path_world_points() -> Array:
 
 func get_path_length() -> float:
 	return _path_length
+
+
+## Expuesto para tests -- el template activo depende de MetaManager.get_victories(), así
+## que ningún test debe asumir un template fijo (regla CLAUDE.md #57, mismo espíritu:
+## nunca depender de estado real de progreso del jugador). Los tests que necesiten "una
+## celda de camino" o "una celda construible" deben derivarla de acá, no hardcodearla.
+func get_path_cells() -> Dictionary:
+	return _path_cells
 
 
 func is_buildable(cell: Vector2i) -> bool:
@@ -247,15 +258,18 @@ func _clear_selection() -> void:
 	_selected_cell = NONE_CELL
 
 
-## Cada celda dibuja PATH_TEXTURE o GROUND_TEXTURE según _path_cells -- el zigzag del
-## camino real (Constants.PATH_TURN_CELLS) es lo que determina dónde se ve la textura de
-## piedra vs la de tierra, así que la forma visual del camino coincide exactamente con
-## por dónde caminan los enemigos (no un fondo escénico fijo sin relación con la forma
-## real). Base/spawn son un tinte de color semi-transparente ENCIMA de la textura de piso
-## (siguen siendo un solo tile cada uno, funcionan como "cartel" de inicio/fin). Con una
-## torre pendiente de colocar (_pending_tower_type != ""), las celdas construibles
-## reciben además un resaltado verde translúcido encima de todo lo anterior.
+## Cada celda dibuja la textura de piso del TEMA del template activo (_template_index,
+## ver Constants.BOARD_PATH_TEXTURES/BOARD_GROUND_TEXTURES) según _path_cells -- el zigzag
+## real del camino elegido es lo que determina dónde se ve la textura de "calle" vs la de
+## "tierra", así que la forma visual coincide exactamente con por dónde caminan los
+## enemigos (no un fondo escénico fijo sin relación con la forma real). Base/spawn son un
+## tinte de color semi-transparente ENCIMA de la textura de piso (siguen siendo un solo
+## tile cada uno, funcionan como "cartel" de inicio/fin). Con una torre pendiente de
+## colocar (_pending_tower_type != ""), las celdas construibles reciben además un
+## resaltado verde translúcido encima de todo lo anterior.
 func _draw() -> void:
+	var path_texture: Texture2D = Constants.BOARD_PATH_TEXTURES[_template_index]
+	var ground_texture: Texture2D = Constants.BOARD_GROUND_TEXTURES[_template_index]
 	for row in range(Constants.GRID_ROWS):
 		for col in range(Constants.GRID_COLS):
 			var cell: Vector2i = Vector2i(col, row)
@@ -264,10 +278,10 @@ func _draw() -> void:
 				Vector2(Constants.TILE_SIZE, Constants.TILE_SIZE)
 			)
 			var is_path: bool = _path_cells.has(cell)
-			draw_texture_rect(PATH_TEXTURE if is_path else GROUND_TEXTURE, rect, false)
-			if cell == Constants.PATH_TURN_CELLS[-1]:
+			draw_texture_rect(path_texture if is_path else ground_texture, rect, false)
+			if cell == _path_turn_cells[-1]:
 				draw_rect(rect, Constants.COLOR_TILE_BASE_TINT, true)
-			elif cell == Constants.PATH_TURN_CELLS[0]:
+			elif cell == _path_turn_cells[0]:
 				draw_rect(rect, Constants.COLOR_TILE_SPAWN_TINT, true)
 			draw_rect(rect, Constants.COLOR_TILE_BORDER, false, 1.0)
 			if _pending_tower_type != "" and is_buildable(cell):

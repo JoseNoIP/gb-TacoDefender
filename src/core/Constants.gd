@@ -33,23 +33,186 @@ const GRID_ROWS: int = 10
 const BOARD_WIDTH: float = GRID_COLS * TILE_SIZE
 const BOARD_HEIGHT: float = GRID_ROWS * TILE_SIZE
 
-## Camino como lista de puntos de giro (columna, fila), 0-indexado. Todo tramo entre dos
-## puntos consecutivos es horizontal o vertical (nunca diagonal) — grid_math.gd expande
-## esto a la lista completa de celdas de camino. Spawn = primer punto; taquería/base =
-## último punto. Serpentea las 10 filas completas (mismo estilo de zigzag de 6 columnas
-## que antes, solo que más corto — ver nota de GRID_ROWS arriba).
-const PATH_TURN_CELLS: Array = [
-	Vector2i(0, 0),
-	Vector2i(5, 0),
-	Vector2i(5, 2),
-	Vector2i(0, 2),
-	Vector2i(0, 4),
-	Vector2i(5, 4),
-	Vector2i(5, 6),
-	Vector2i(0, 6),
-	Vector2i(0, 8),
-	Vector2i(5, 8),
-	Vector2i(5, 9),
+## Un camino distinto por NIVEL (a pedido explícito tras el rebalance de dificultad: "que
+## el jugador no sienta que siempre juega la misma partida"). Un "nivel" acá NO es una
+## partida separada — sigue siendo GDD sección 2 al pie de la letra (una partida = 10
+## oleadas, mismas torres/oro de principio a fin, tablero fijo durante ESA partida). Lo
+## que cambia es CUÁL de estos 10 templates se usa como tablero, y eso se decide una sola
+## vez al iniciar la partida (Board._ready(), vía GridMathGd.select_path_template_index())
+## según `MetaManager.get_victories()` — el mismo contador que YA escala HP/recompensa de
+## enemigos por victoria (ver ENEMY_HP_BONUS_PER_VICTORY más abajo). "Victorias" solo sube
+## al completar las 10 oleadas (GameManager._win_game() -> MetaManager.add_victory()), así
+## que perder una partida NUNCA cambia el tablero — el jugador vuelve a intentar el MISMO
+## nivel hasta ganarlo, recién ahí avanza al siguiente. Es un array fijo compilado en el
+## juego (igual que WAVE_DEFINITIONS) — IDÉNTICO en la instalación de cualquier jugador, así
+## que "cómo superaste el nivel 3" es comparable entre teléfonos distintos sin necesitar
+## ningún servidor/semilla. El índice cicla con % (ver select_path_template_index) para que
+## la variedad visual siga sin repetirse en partidas 11, 21, etc. — aunque el escalado de
+## HP/recompensa ya esté topado en victories=5 (ENEMY_VICTORY_SCALING_CAP).
+##
+## Cada entrada: lista de puntos de giro (columna, fila) 0-indexado. Todo tramo entre dos
+## puntos consecutivos es horizontal o vertical (nunca diagonal), y la fila nunca retrocede
+## (progreso siempre hacia abajo — un enemigo que caminara "hacia arriba" visualmente
+## confundiría al jugador). grid_math.gd expande cada uno a la lista completa de celdas de
+## camino. Spawn = primer punto de la entrada; taquería/base = último punto. Ver
+## tools/gen_board_tiles.py para las texturas correspondientes (BOARD_PATH_TEXTURES/
+## BOARD_GROUND_TEXTURES, mismo índice). Template 0 es el original (retrocompatible, un
+## jugador sin victorias ve el mismo tablero de siempre).
+const PATH_TEMPLATES: Array = [
+	[
+		Vector2i(0, 0),
+		Vector2i(5, 0),
+		Vector2i(5, 2),
+		Vector2i(0, 2),
+		Vector2i(0, 4),
+		Vector2i(5, 4),
+		Vector2i(5, 6),
+		Vector2i(0, 6),
+		Vector2i(0, 8),
+		Vector2i(5, 8),
+		Vector2i(5, 9),
+	],  ## 0: clásico (piedra) — sin cambios respecto al tablero original.
+	[
+		Vector2i(5, 0),
+		Vector2i(0, 0),
+		Vector2i(0, 2),
+		Vector2i(5, 2),
+		Vector2i(5, 4),
+		Vector2i(0, 4),
+		Vector2i(0, 6),
+		Vector2i(5, 6),
+		Vector2i(5, 8),
+		Vector2i(0, 8),
+		Vector2i(0, 9),
+	],  ## 1: espejo del clásico (desierto) — entra por la derecha.
+	[
+		Vector2i(0, 0),
+		Vector2i(5, 0),
+		Vector2i(5, 3),
+		Vector2i(0, 3),
+		Vector2i(0, 6),
+		Vector2i(5, 6),
+		Vector2i(5, 9),
+	],  ## 2: bandas altas (nieve) — camino más corto y directo.
+	[
+		Vector2i(0, 0),
+		Vector2i(5, 0),
+		Vector2i(5, 2),
+		Vector2i(2, 2),
+		Vector2i(2, 4),
+		Vector2i(5, 4),
+		Vector2i(5, 6),
+		Vector2i(0, 6),
+		Vector2i(0, 8),
+		Vector2i(3, 8),
+		Vector2i(3, 9),
+		Vector2i(5, 9),
+	],  ## 3: asimétrico (selva) — mezcla barrido completo con parcial.
+	[
+		Vector2i(3, 0),
+		Vector2i(0, 0),
+		Vector2i(0, 2),
+		Vector2i(5, 2),
+		Vector2i(5, 4),
+		Vector2i(0, 4),
+		Vector2i(0, 6),
+		Vector2i(5, 6),
+		Vector2i(5, 8),
+		Vector2i(2, 8),
+		Vector2i(2, 9),
+	],  ## 4: zigzag desde el centro (volcánico).
+	[
+		Vector2i(0, 0),
+		Vector2i(4, 0),
+		Vector2i(4, 2),
+		Vector2i(1, 2),
+		Vector2i(1, 4),
+		Vector2i(5, 4),
+		Vector2i(5, 6),
+		Vector2i(2, 6),
+		Vector2i(2, 8),
+		Vector2i(5, 8),
+		Vector2i(5, 9),
+	],  ## 5: "peine" (playa) — barridos parciales alternados.
+	[
+		Vector2i(5, 0),
+		Vector2i(1, 0),
+		Vector2i(1, 3),
+		Vector2i(5, 3),
+		Vector2i(5, 6),
+		Vector2i(0, 6),
+		Vector2i(0, 9),
+	],  ## 6: bandas altas espejadas (pantano).
+	[
+		Vector2i(0, 0),
+		Vector2i(5, 0),
+		Vector2i(5, 1),
+		Vector2i(0, 1),
+		Vector2i(0, 3),
+		Vector2i(5, 3),
+		Vector2i(5, 4),
+		Vector2i(0, 4),
+		Vector2i(0, 6),
+		Vector2i(5, 6),
+		Vector2i(5, 7),
+		Vector2i(0, 7),
+		Vector2i(0, 9),
+		Vector2i(5, 9),
+	],  ## 7: denso, muchas vueltas cortas (nocturno).
+	[
+		Vector2i(0, 0),
+		Vector2i(5, 0),
+		Vector2i(5, 2),
+		Vector2i(0, 2),
+		Vector2i(0, 5),
+		Vector2i(5, 5),
+		Vector2i(5, 7),
+		Vector2i(0, 7),
+		Vector2i(0, 9),
+		Vector2i(5, 9),
+	],  ## 8: bandas mixtas (otoño).
+	[
+		Vector2i(0, 0),
+		Vector2i(5, 0),
+		Vector2i(5, 2),
+		Vector2i(3, 2),
+		Vector2i(3, 4),
+		Vector2i(0, 4),
+		Vector2i(0, 6),
+		Vector2i(4, 6),
+		Vector2i(4, 8),
+		Vector2i(1, 8),
+		Vector2i(1, 9),
+		Vector2i(5, 9),
+	],  ## 9: "dorado", el más intrincado (nivel de prestigio).
+]
+
+## Texturas de piso por template (mismo índice que PATH_TEMPLATES, ver
+## tools/gen_board_tiles.py) -- Array sin tipar a propósito, regla CLAUDE.md #9
+## ("const ARRAY: Array[T]" es inválido como const en GDScript 4).
+const BOARD_PATH_TEXTURES: Array = [
+	preload("res://assets/sprites/board/path_tile_0.png"),
+	preload("res://assets/sprites/board/path_tile_1.png"),
+	preload("res://assets/sprites/board/path_tile_2.png"),
+	preload("res://assets/sprites/board/path_tile_3.png"),
+	preload("res://assets/sprites/board/path_tile_4.png"),
+	preload("res://assets/sprites/board/path_tile_5.png"),
+	preload("res://assets/sprites/board/path_tile_6.png"),
+	preload("res://assets/sprites/board/path_tile_7.png"),
+	preload("res://assets/sprites/board/path_tile_8.png"),
+	preload("res://assets/sprites/board/path_tile_9.png"),
+]
+const BOARD_GROUND_TEXTURES: Array = [
+	preload("res://assets/sprites/board/ground_tile_0.png"),
+	preload("res://assets/sprites/board/ground_tile_1.png"),
+	preload("res://assets/sprites/board/ground_tile_2.png"),
+	preload("res://assets/sprites/board/ground_tile_3.png"),
+	preload("res://assets/sprites/board/ground_tile_4.png"),
+	preload("res://assets/sprites/board/ground_tile_5.png"),
+	preload("res://assets/sprites/board/ground_tile_6.png"),
+	preload("res://assets/sprites/board/ground_tile_7.png"),
+	preload("res://assets/sprites/board/ground_tile_8.png"),
+	preload("res://assets/sprites/board/ground_tile_9.png"),
 ]
 
 # --- HUD / layout de UI (deja espacio fijo arriba y abajo del tablero) ---
@@ -301,10 +464,11 @@ const UI_BUTTON_CORNER_RADIUS: int = 12
 const UI_PANEL_CORNER_RADIUS: int = 12  ## igual a ModalStyleGd.CORNER_RADIUS, a propósito.
 
 ## Path/buildable ya NO usan color plano -- Board.gd dibuja texturas tileables reales
-## (assets/sprites/board/{path,ground}_tile.png, ver tools/gen_board_tiles.py) para que
-## el camino en zigzag se vea como una calle de piedra real, no como una grilla de
-## rectángulos de color. Base/spawn siguen usando un tinte de color (son un solo tile
-## cada uno, funcionan bien como "cartel" de inicio/fin sin necesitar textura propia).
+## (assets/sprites/board/{path,ground}_tile_N.png, un tema por nivel — ver
+## BOARD_PATH_TEXTURES/BOARD_GROUND_TEXTURES y tools/gen_board_tiles.py) para que el
+## camino en zigzag se vea como una calle real, no como una grilla de rectángulos de
+## color. Base/spawn siguen usando un tinte de color (son un solo tile cada uno,
+## funcionan bien como "cartel" de inicio/fin sin necesitar textura propia).
 const COLOR_TILE_BORDER: Color = Color(0.2, 0.15, 0.08, 0.6)
 const COLOR_TILE_BASE_TINT: Color = Color(0.85, 0.45, 0.15, 0.65)
 const COLOR_TILE_SPAWN_TINT: Color = Color(0.3, 0.8, 0.35, 0.55)
