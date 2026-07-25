@@ -18,9 +18,29 @@ func test_gold_changed_updates_label_text() -> void:
 	assert_eq((_hud.get(&"_gold_label") as Label).text, "$250")
 
 
-func test_base_health_changed_updates_label_text() -> void:
+func test_base_health_changed_builds_one_heart_per_max_life() -> void:
 	EventBus.base_health_changed.emit(2, 5)
-	assert_eq((_hud.get(&"_hp_label") as Label).text, "2/5")
+	var hearts: Array = _hud.get(&"_hp_hearts")
+	assert_eq(hearts.size(), 5, "una fila de corazones por vida máxima, no un texto")
+
+
+func test_base_health_changed_shows_lost_lives_as_broken_hearts() -> void:
+	EventBus.base_health_changed.emit(2, 5)
+	var hearts: Array = _hud.get(&"_hp_hearts")
+	var full_texture: Texture2D = load("res://assets/sprites/ui/heart.png")
+	var broken_texture: Texture2D = load("res://assets/sprites/ui/broken_heart.png")
+	for i in range(hearts.size()):
+		var expected: Texture2D = full_texture if i < 2 else broken_texture
+		assert_eq((hearts[i] as TextureRect).texture, expected, "corazón %d" % i)
+
+
+func test_base_health_changed_does_not_rebuild_hearts_when_max_is_unchanged() -> void:
+	EventBus.base_health_changed.emit(3, 3)
+	var first_heart: TextureRect = (_hud.get(&"_hp_hearts") as Array)[0]
+	EventBus.base_health_changed.emit(2, 3)
+	var hearts_after: Array = _hud.get(&"_hp_hearts")
+	assert_eq(hearts_after.size(), 3)
+	assert_same(hearts_after[0], first_heart, "el mismo máximo no debe recrear los nodos")
 
 
 func test_wave_started_hides_start_wave_button() -> void:

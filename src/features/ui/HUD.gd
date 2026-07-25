@@ -10,6 +10,8 @@ extends CanvasLayer
 const ModalStyleGd := preload("res://src/shared/modal_style.gd")
 const IconStyleGd := preload("res://src/shared/icon_style.gd")
 const ButtonSoundGd := preload("res://src/shared/button_sound.gd")
+const HeartFullTexture: Texture2D = preload("res://assets/sprites/ui/heart.png")
+const HeartEmptyTexture: Texture2D = preload("res://assets/sprites/ui/broken_heart.png")
 
 const TOWER_BUTTON_WIDTH: float = 110.0
 const TOWER_BUTTON_HEIGHT: float = 94.0
@@ -17,6 +19,9 @@ const TOWER_BUTTON_GAP: float = 10.0
 const TOWER_BUTTON_ICON_SIZE: float = 40.0
 const TOP_BAR_ICON_SIZE: float = 22.0
 const SELECTION_ICON_SIZE: float = 48.0
+## Fila de corazones de vida (reemplaza ícono único + texto "3/3" -- ver _rebuild_hp_hearts).
+const HP_HEART_GAP: float = 3.0
+const HP_HEART_MIN_ICON_SIZE: float = 12.0
 const TOAST_DURATION: float = 1.6
 const TOAST_FADE_IN: float = 0.15
 const TOAST_FADE_OUT: float = 0.25
@@ -34,7 +39,9 @@ const FTUE_MESSAGE_KEYS: Array = ["FTUE_1", "FTUE_2", "FTUE_3"]
 
 var _gold_label: Label = Label.new()
 var _wave_label: Label = Label.new()
-var _hp_label: Label = Label.new()
+var _hp_hearts_box: Control = Control.new()
+var _hp_hearts: Array = []  ## TextureRect por vida máxima -- ver _rebuild_hp_hearts().
+var _hp_hearts_max: int = -1  ## -1 = todavía no se construyó ninguna fila.
 var _pause_button: Button = Button.new()
 var _start_wave_button: Button = Button.new()
 var _toast_label: Label = Label.new()
@@ -135,20 +142,14 @@ func _build_top_bar() -> void:
 	_wave_label.text = tr(&"LABEL_WAVE") % [0, Constants.TOTAL_WAVES]
 	add_child(_wave_label)
 
-	## _hp_label queda alineado a la derecha dentro de su propia caja, así que el ícono se
-	## ubica ANTES de esa caja (mismo borde derecho final que antes: DESIGN_WIDTH - 16).
+	## Caja de corazones alineada al mismo borde derecho que tenía antes el ícono+"3/3"
+	## (DESIGN_WIDTH - 16) -- ver _rebuild_hp_hearts() para cómo se llena.
 	var hp_box_width: float = 154.0
 	var hp_box_x: float = Constants.DESIGN_WIDTH - 16.0 - hp_box_width
-	var heart_icon: TextureRect = IconStyleGd.make_icon("res://assets/sprites/ui/heart.png")
-	heart_icon.position = Vector2(hp_box_x, 25.0)
-	heart_icon.set_size(Vector2(TOP_BAR_ICON_SIZE, TOP_BAR_ICON_SIZE))
-	add_child(heart_icon)
-
-	_hp_label.position = Vector2(hp_box_x + TOP_BAR_ICON_SIZE + 6.0, 26.0)
-	_hp_label.set_size(Vector2(hp_box_width - TOP_BAR_ICON_SIZE - 6.0, 26.0))
-	_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_style_label(_hp_label, Constants.COLOR_HP_FULL)
-	add_child(_hp_label)
+	_hp_hearts_box.position = Vector2(hp_box_x, 25.0)
+	_hp_hearts_box.set_size(Vector2(hp_box_width, TOP_BAR_ICON_SIZE))
+	_hp_hearts_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_hp_hearts_box)
 
 	_pause_button.text = "II"
 	_pause_button.position = Vector2(Constants.DESIGN_WIDTH - 56.0, 52.0)
@@ -342,10 +343,43 @@ func _on_gold_changed(new_amount: int) -> void:
 	_gold_label.text = "$%d" % new_amount
 
 
+## Un corazón por vida máxima (en vez de un ícono único + texto "3/3") -- el jugador
+## reportó que el contador numérico no era claro ("tuve que jugar varias partidas para
+## entender cómo funcionaba"). El máximo es fijo durante toda la partida (ver
+## GameManager._base_hp_max, solo se fija una vez al iniciar según la mejora "Barra
+## Blindada"), así que la fila de corazones se reconstruye solo cuando cambia -- nunca en
+## cada impacto recibido.
 func _on_base_health_changed(current: int, maximum: int) -> void:
-	_hp_label.text = "%d/%d" % [current, maximum]
-	var color: Color = Constants.COLOR_HP_FULL if current > 0 else Constants.COLOR_HP_EMPTY
-	_hp_label.add_theme_color_override(&"font_color", color)
+	if maximum != _hp_hearts_max:
+		_rebuild_hp_hearts(maximum)
+	for i in range(_hp_hearts.size()):
+		var heart: TextureRect = _hp_hearts[i]
+		heart.texture = HeartFullTexture if i < current else HeartEmptyTexture
+
+
+## Corazones en una sola fila que SIEMPRE cabe en hp_box_width (154px) sin importar cuántas
+## vidas máximas tenga la partida (3 base, hasta 8 con "Barra Blindada" nivel 5) -- el
+## tamaño de ícono se auto-ajusta hacia abajo (nunca crece más allá de TOP_BAR_ICON_SIZE)
+## en vez de asumir que un tamaño fijo alcanza para cualquier cantidad (mismo criterio de
+## auto-escalado que la regla CLAUDE.md #54, acá en un solo eje).
+func _rebuild_hp_hearts(maximum: int) -> void:
+	for heart: TextureRect in _hp_hearts:
+		heart.queue_free()
+	_hp_hearts.clear()
+	_hp_hearts_max = maximum
+	if maximum <= 0:
+		return
+	var icon_size: float = clampf(
+		(_hp_hearts_box.size.x - float(maximum - 1) * HP_HEART_GAP) / float(maximum),
+		HP_HEART_MIN_ICON_SIZE,
+		TOP_BAR_ICON_SIZE
+	)
+	for i in range(maximum):
+		var heart: TextureRect = IconStyleGd.make_icon("res://assets/sprites/ui/heart.png")
+		heart.position = Vector2(float(i) * (icon_size + HP_HEART_GAP), 0.0)
+		heart.set_size(Vector2(icon_size, icon_size))
+		_hp_hearts_box.add_child(heart)
+		_hp_hearts.append(heart)
 
 
 func _on_wave_started(wave_number: int) -> void:
