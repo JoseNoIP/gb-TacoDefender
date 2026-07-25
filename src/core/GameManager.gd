@@ -5,6 +5,7 @@ extends Node
 enum State { MENU, PLAYING, WAVE_INTERMISSION, PAUSED, GAME_OVER, GAME_WON }
 
 const UpgradeShopGd := preload("res://src/features/meta/upgrade_shop.gd")
+const GridMathGd := preload("res://src/features/board/grid_math.gd")
 
 var _state: State = State.MENU
 var _previous_state: State = State.MENU
@@ -14,6 +15,9 @@ var _base_hp_max: int = 0
 var _current_wave: int = 0
 var _session_time: float = 0.0
 var _intermission_timer: float = 0.0
+## -1 = "sin pedido explícito, usar el default de progresión" (ver resolve_level_index()).
+var _requested_level_index: int = -1
+var _current_level_index: int = 0
 
 
 func _ready() -> void:
@@ -43,11 +47,44 @@ func start_game() -> void:
 	_base_hp = _base_hp_max
 	_current_wave = 0
 	_session_time = 0.0
+	## Se resuelve y consume ACÁ, no antes -- Board.gd (instanciado por Game.gd ANTES de
+	## este start_game(), ver regla CLAUDE.md #48) llama resolve_level_index() de forma
+	## independiente y directa en su propio _ready() para obtener el MISMO valor sin
+	## depender de que este método ya haya corrido (resolve_level_index() es pura, sin
+	## side-effects, así que da igual quién la llame primero).
+	_current_level_index = resolve_level_index()
+	_requested_level_index = -1
 	get_tree().paused = false
 	EventBus.game_started.emit()
 	EventBus.gold_changed.emit(_gold)
 	EventBus.base_health_changed.emit(_base_hp, _base_hp_max)
 	_begin_intermission()
+
+
+## Pide que la PRÓXIMA partida (el siguiente start_game()) use este nivel en vez del
+## default de progresión -- usado por LevelSelectScreen (elegir cualquier nivel
+## desbloqueado) y VictoryScreen (botón "Siguiente nivel"). Se consume una sola vez en
+## start_game(); si el jugador vuelve a jugar "Jugar" desde el menú sin pasar por ninguno
+## de esos dos flujos, vuelve a caer en el default de progresión normal.
+func request_level(index: int) -> void:
+	_requested_level_index = index
+
+
+## Pura -- ni lee ni escribe estado que start_game() vaya a tocar recién más tarde, así
+## que es segura de llamar desde Board._ready() (que corre ANTES de start_game() dentro
+## de la misma escena, ver Game.gd::_build_scene()) sin ningún problema de orden.
+func resolve_level_index() -> int:
+	if _requested_level_index >= 0:
+		return _requested_level_index
+	return GridMathGd.select_path_template_index(
+		MetaManager.get_victories(), Constants.PATH_TEMPLATES.size()
+	)
+
+
+## El nivel que se está jugando ESTA partida (fijo, ver start_game()) -- usado por HUD
+## (nombre del nivel) y VictoryScreen (botón "Siguiente nivel" = este + 1).
+func get_current_level_index() -> int:
+	return _current_level_index
 
 
 func pause_game() -> void:
@@ -158,7 +195,17 @@ func _on_wave_cleared(wave_number: int) -> void:
 func _win_game() -> void:
 	_state = State.GAME_WON
 	MetaManager.add_tips(_with_tip_multiplier(Constants.TIP_REWARD_VICTORY_BONUS))
-	MetaManager.add_victory()
+	## Oro sin gastar en el momento de ganar -> propinas extra (Constants.
+	## EFFICIENCY_TIP_RATIO) -- premia terminar con pocas torres/gasto contenido, ver
+	## nota extensa en Constants.gd.
+	var efficiency_bonus: int = int(floor(float(_gold) * Constants.EFFICIENCY_TIP_RATIO))
+	if efficiency_bonus > 0:
+		MetaManager.add_tips(_with_tip_multiplier(efficiency_bonus))
+	## Solo cuenta como avance de progresión si era el nivel frontera (el siguiente no
+	## jugado todavía) -- rejugar un nivel YA completado (LevelSelectScreen) sigue dando
+	## propinas, pero no debe re-sumar victorias ni re-escalar dificultad de por vida.
+	if _current_level_index == MetaManager.get_victories():
+		MetaManager.add_victory()
 	MetaManager.set_best_wave_if_higher(Constants.TOTAL_WAVES)
 	EventBus.game_won.emit()
 

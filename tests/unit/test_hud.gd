@@ -53,6 +53,22 @@ func test_wave_intermission_shows_start_wave_button() -> void:
 	assert_true((_hud.get(&"_start_wave_button") as Button).visible)
 
 
+## GameManager.get_current_level_index() se lee EN EL MOMENTO del evento (no se cachea
+## en _ready()), así que fijar el nivel con request_level()+start_game() ANTES de emitir
+## wave_started es suficiente para controlar qué nombre debería aparecer -- el jugador
+## pidió explícitamente poder ver en qué nivel está durante la partida.
+func test_wave_started_prefixes_the_level_name() -> void:
+	GameManager.request_level(2)
+	GameManager.start_game()
+	EventBus.wave_started.emit(3)
+	var expected_name: String = tr(StringName(Constants.LEVEL_NAME_KEYS[2]))
+	var wave_label: Label = _hud.get(&"_wave_label")
+	assert_true(
+		wave_label.text.begins_with(expected_name),
+		"esperaba que empiece con '%s', fue '%s'" % [expected_name, wave_label.text]
+	)
+
+
 func _sample_selection_info() -> Dictionary:
 	return {
 		"cell": Vector2i(1, 1),

@@ -122,6 +122,22 @@ func test_at_least_ten_path_templates_exist() -> void:
 	)
 
 
+## Red de seguridad contra un futuro template "imposible" (muy poco espacio construible
+## para alcanzar el DPS necesario en la oleada 10 con el escalado de dificultad al tope,
+## ver idea-base.md "Verificación de balance por nivel" para el análisis completo). El
+## template más ajustado hoy (7, "denso") tiene 15 celdas construibles (25% del tablero)
+## y el análisis a mano confirma que alcanza con margen — este test solo evita que un
+## template NUEVO caiga por debajo de ese piso sin que nadie lo note.
+func test_every_template_has_enough_buildable_cells() -> void:
+	var total_cells: int = Constants.GRID_COLS * Constants.GRID_ROWS
+	for i in range(Constants.PATH_TEMPLATES.size()):
+		var template: Array = Constants.PATH_TEMPLATES[i]
+		var path_cells: Dictionary = GridMathGd.compute_path_cells(template)
+		var buildable: int = total_cells - path_cells.size()
+		var msg: String = "template %d solo tiene %d celdas construibles" % [i, buildable]
+		assert_gte(buildable, 12, msg)
+
+
 func test_compute_path_world_points_matches_turn_cell_count() -> void:
 	var points: Array = GridMathGd.compute_path_world_points(Constants.PATH_TEMPLATES[0])
 	assert_eq(points.size(), Constants.PATH_TEMPLATES[0].size())

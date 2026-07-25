@@ -29,16 +29,17 @@ var _is_dragging: bool = false
 var _accumulated_drag: float = 0.0
 
 
-## El template de camino/tema visual se elige UNA sola vez acá, según cuántas partidas
-## completas ("victorias") ya ganó el jugador -- ver la nota extensa en
-## Constants.PATH_TEMPLATES. Queda fijo el resto de la partida (nunca se recalcula en
-## medio de las 10 oleadas).
+## El template de camino/tema visual se elige UNA sola vez acá -- GameManager.
+## resolve_level_index() decide si es un nivel pedido explícitamente (LevelSelectScreen/
+## "Siguiente nivel") o el default de progresión según victorias (ver nota extensa en
+## Constants.PATH_TEMPLATES). Es seguro llamarla ACÁ, antes de que GameManager.
+## start_game() corra (ver Game.gd::_build_scene(), regla CLAUDE.md #48): resolve_level_
+## index() es pura, no depende de nada que start_game() vaya a cambiar recién después.
+## Queda fijo el resto de la partida (nunca se recalcula en medio de las 10 oleadas).
 func _ready() -> void:
 	position = Vector2((Constants.DESIGN_WIDTH - Constants.BOARD_WIDTH) * 0.5, 0.0)
 
-	_template_index = GridMathGd.select_path_template_index(
-		MetaManager.get_victories(), Constants.PATH_TEMPLATES.size()
-	)
+	_template_index = GameManager.resolve_level_index()
 	_path_turn_cells = Constants.PATH_TEMPLATES[_template_index]
 	_path_cells = GridMathGd.compute_path_cells(_path_turn_cells)
 	_path_world_points = GridMathGd.compute_path_world_points(_path_turn_cells)

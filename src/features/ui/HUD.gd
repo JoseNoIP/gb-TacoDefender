@@ -137,7 +137,7 @@ func _build_top_bar() -> void:
 	add_child(_gold_label)
 
 	_wave_label.position = Vector2(16.0, 54.0)
-	_wave_label.set_size(Vector2(240.0, 26.0))
+	_wave_label.set_size(Vector2(310.0, 26.0))
 	_style_label(_wave_label, Constants.COLOR_HUD_TEXT)
 	_wave_label.text = tr(&"LABEL_WAVE") % [0, Constants.TOTAL_WAVES]
 	add_child(_wave_label)
@@ -382,13 +382,26 @@ func _rebuild_hp_hearts(maximum: int) -> void:
 		_hp_hearts.append(heart)
 
 
+## Nombre del nivel activo (GameManager.get_current_level_index(), fijado en start_game()
+## ANTES de que se emitan wave_started/wave_intermission_started -- ver nota en
+## GameManager.start_game()) prefijado a la etiqueta de oleada. El jugador pidió
+## explícitamente poder ver en qué nivel está durante la partida, no solo en el menú.
+func _current_level_name() -> String:
+	var index: int = GameManager.get_current_level_index()
+	if index < 0 or index >= Constants.LEVEL_NAME_KEYS.size():
+		return ""
+	return tr(StringName(Constants.LEVEL_NAME_KEYS[index]))
+
+
 func _on_wave_started(wave_number: int) -> void:
-	_wave_label.text = tr(&"LABEL_WAVE") % [wave_number, Constants.TOTAL_WAVES]
+	var wave_text: String = tr(&"LABEL_WAVE") % [wave_number, Constants.TOTAL_WAVES]
+	_wave_label.text = "%s · %s" % [_current_level_name(), wave_text]
 	_start_wave_button.visible = false
 
 
 func _on_wave_intermission_started(next_wave_number: int, _auto_start_delay: float) -> void:
-	_wave_label.text = tr(&"LABEL_WAVE_PREPARE") % [next_wave_number, Constants.TOTAL_WAVES]
+	var wave_text: String = tr(&"LABEL_WAVE_PREPARE") % [next_wave_number, Constants.TOTAL_WAVES]
+	_wave_label.text = "%s · %s" % [_current_level_name(), wave_text]
 	_start_wave_button.visible = true
 
 

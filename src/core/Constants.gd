@@ -187,6 +187,23 @@ const PATH_TEMPLATES: Array = [
 	],  ## 9: "dorado", el más intrincado (nivel de prestigio).
 ]
 
+## Nombre de cada nivel (mismo índice que PATH_TEMPLATES/BOARD_*_TEXTURES) -- keys de
+## traducción (ver /mobile-i18n, assets/translations/translations.txt), nunca texto de
+## display directo. Se muestran en el HUD durante la partida (HUD.gd, prefijado a la
+## etiqueta de oleada) y en LevelSelectScreen.
+const LEVEL_NAME_KEYS: Array = [
+	"LEVEL_NAME_0",
+	"LEVEL_NAME_1",
+	"LEVEL_NAME_2",
+	"LEVEL_NAME_3",
+	"LEVEL_NAME_4",
+	"LEVEL_NAME_5",
+	"LEVEL_NAME_6",
+	"LEVEL_NAME_7",
+	"LEVEL_NAME_8",
+	"LEVEL_NAME_9",
+]
+
 ## Texturas de piso por template (mismo índice que PATH_TEMPLATES, ver
 ## tools/gen_board_tiles.py) -- Array sin tipar a propósito, regla CLAUDE.md #9
 ## ("const ARRAY: Array[T]" es inválido como const en GDScript 4).
@@ -415,6 +432,13 @@ const WAVE_DEFINITIONS: Array = [
 # --- Metagame: Propinas (GDD sección 5) ---
 const TIP_REWARD_PER_WAVE: int = 10
 const TIP_REWARD_VICTORY_BONUS: int = 50
+## Bono de eficiencia (no GDD, agregado a pedido explícito tras feedback real: "que no se
+## gaste todo el oro en comprar cañones y que una parte se convierta en propinas") -- el
+## oro SIN GASTAR en el momento exacto de ganar (GameManager._win_game) se convierte en
+## propinas extra a esta tasa. Premia terminar con pocas torres/gasto contenido en vez de
+## construir en cada casilla disponible, sin penalizar a quien sí gasta todo (0 propinas
+## extra, ni más ni menos que antes).
+const EFFICIENCY_TIP_RATIO: float = 0.5
 
 # --- Metagame: Upgrades permanentes (GDD sección 5 — 5 niveles, mismo costo por nivel
 # para las 5 mejoras). IDs usados como key en MetaManager/upgrade_shop.gd. ---

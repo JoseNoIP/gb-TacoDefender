@@ -1,7 +1,14 @@
 extends CanvasLayer
 ## Overlay de victoria: se muestra al recibir EventBus.game_won (oleada 10 superada, GDD
-## sección 2). Muestra propinas totales acumuladas y botones para jugar de nuevo o volver
-## al menú. Game.gd decide a qué escena ir.
+## sección 2). Muestra propinas totales acumuladas y botones para avanzar al siguiente
+## nivel o volver al menú. Game.gd decide a qué escena ir.
+##
+## "Siguiente nivel" (no "Jugar de nuevo" -- el jugador reportó que ese texto confundía,
+## parecía repetir el MISMO nivel) pide el nivel actual+1 vía GameManager.request_level()
+## ANTES de reusar el mismo restart_requested/Game.gd::change_scene_to_file ya existente
+## -- (actual+1) % PATH_TEMPLATES.size() es SIEMPRE un nivel ya desbloqueado sea cual sea
+## el escenario (progresión normal o rejugar un nivel viejo desde LevelSelectScreen, ver
+## nota en GameManager._win_game()).
 
 signal restart_requested
 signal main_menu_requested
@@ -59,7 +66,7 @@ func _build_ui() -> void:
 	_stats_label.add_theme_color_override(&"font_color", Constants.COLOR_HUD_TEXT)
 	vbox.add_child(_stats_label)
 
-	vbox.add_child(_make_button("BTN_PLAY_AGAIN", _on_restart_pressed))
+	vbox.add_child(_make_button("BTN_NEXT_LEVEL", _on_next_level_pressed))
 	vbox.add_child(_make_button("BTN_MAIN_MENU", _on_menu_pressed))
 
 
@@ -79,7 +86,10 @@ func _on_game_won() -> void:
 	_panel.show()
 
 
-func _on_restart_pressed() -> void:
+func _on_next_level_pressed() -> void:
+	var template_count: int = Constants.PATH_TEMPLATES.size()
+	var next_index: int = (GameManager.get_current_level_index() + 1) % template_count
+	GameManager.request_level(next_index)
 	restart_requested.emit()
 
 

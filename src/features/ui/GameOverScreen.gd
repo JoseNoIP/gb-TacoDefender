@@ -2,6 +2,11 @@ extends CanvasLayer
 ## Overlay de derrota: se muestra al recibir EventBus.game_over (vida de la taquería a 0,
 ## GDD sección 2). Muestra oleada alcanzada y oro final; botón REINTENTAR. Game.gd decide
 ## a qué escena ir (y otorga estadísticas cross-run — ver Game.gd::_on_game_over).
+##
+## Incluye un recordatorio de la tienda de mejoras permanentes (a pedido explícito: si un
+## nivel se complica, el jugador puede no saber que existe esa vía) -- solo texto, no un
+## botón nuevo: "Menu Principal" ya lleva un tap más allá a la tienda, agregar un tercer
+## botón acá era redundante con esa navegación ya existente.
 
 signal restart_requested
 signal main_menu_requested
@@ -13,6 +18,7 @@ const ICON_SIZE: float = 64.0
 
 var _panel: PanelContainer = PanelContainer.new()
 var _stats_label: Label = Label.new()
+var _reminder_label: Label = Label.new()
 
 
 func _ready() -> void:
@@ -30,7 +36,7 @@ func _exit_tree() -> void:
 
 func _build_ui() -> void:
 	var panel_w: float = 280.0
-	var panel_h: float = 320.0
+	var panel_h: float = 368.0
 	_panel.position = Vector2(
 		(Constants.DESIGN_WIDTH - panel_w) * 0.5, (Constants.DESIGN_HEIGHT - panel_h) * 0.5
 	)
@@ -58,6 +64,17 @@ func _build_ui() -> void:
 	_stats_label.add_theme_font_size_override(&"font_size", Constants.UI_MIN_FONT_SIZE)
 	_stats_label.add_theme_color_override(&"font_color", Constants.COLOR_HUD_TEXT)
 	vbox.add_child(_stats_label)
+
+	## Autowrap por el mismo motivo que UpgradeScreen/HUD FTUE: una oración larga (o su
+	## traducción) sin esto reporta su ancho natural completo como mínimo y desborda el
+	## panel (mismo bug/mismo fix ya visto dos veces en este proyecto).
+	_reminder_label.text = "LABEL_UPGRADE_REMINDER"  ## raw key -- auto_translate_mode nativo.
+	_reminder_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	_reminder_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_reminder_label.custom_minimum_size = Vector2(panel_w - 32.0, 0.0)
+	_reminder_label.add_theme_font_size_override(&"font_size", 14)
+	_reminder_label.add_theme_color_override(&"font_color", Constants.COLOR_TIPS)
+	vbox.add_child(_reminder_label)
 
 	vbox.add_child(_make_button("BTN_RETRY", _on_restart_pressed))
 	vbox.add_child(_make_button("BTN_MAIN_MENU", _on_menu_pressed))

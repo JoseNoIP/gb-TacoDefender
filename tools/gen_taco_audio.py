@@ -9,6 +9,7 @@ en AudioManager.SFX_FILES/MUSIC_PATH son específicos de Taco Defender.
 
 Uso: python3 tools/gen_taco_audio.py
 """
+import math
 import os
 import sys
 
@@ -77,15 +78,31 @@ def sfx_button_tap():
 
 
 def music_loop():
-    """Música de fondo: pad ambiental de 3 tonos (acorde simple). Duración EXACTA de
-    4.0s con frecuencias 220/330/440 Hz -- cada una completa un número entero de ciclos
-    en ese lapso (880/1320/1760), así que la fase al final del buffer coincide con la
-    fase inicial y el loop no clickea al reiniciar (ver AudioManager._on_music_finished,
-    que reproduce el archivo de nuevo manualmente en vez de depender de loop_mode del
-    import de Godot -- más robusto porque no depende de un .import gitignoreado)."""
-    dur = 4.0
-    pad = _mix(_sine(220, dur, 0.5), _sine(330, dur, 0.4), _sine(440, dur, 0.3))
-    return [s * 0.22 for s in pad]
+    """Música de fondo: dos acordes suaves alternados (A -> G, un paso entero abajo) con
+    un tremolo lento de amplitud, en vez de un acorde ESTATICO de 3 tonos fijos sin
+    ninguna variación en 4s -- el jugador reportó que sonaba como "un zumbido molesto"
+    (correcto: sin movimiento de tono NI de amplitud, un pad sostenido se percibe como
+    drone/zumbido, no como música, sin importar cuán consonante sea el acorde en sí).
+
+    Duración EXACTA de 4.0s, dividida en 2 mitades de 2.0s cada una (un acorde por
+    mitad) -- todas las frecuencias completan un número entero de ciclos DENTRO de su
+    propia mitad (ver lista de abajo), así que no hay click ni en el empalme entre
+    acordes (t=2.0s) ni en el loop completo (t=4.0s vuelve a t=0.0s), mismo criterio que
+    la versión anterior pero aplicado dos veces.
+    Acorde A (0.0-2.0s): 220/330/440 Hz -> 440/660/880 ciclos en 2s (todos enteros).
+    Acorde B (2.0-4.0s): 196/294/392 Hz -> 392/588/784 ciclos en 2s (todos enteros).
+    Tremolo: 0.5 Hz (2 ciclos completos en los 4.0s) modulando la amplitud entre ~82% y
+    100% -- le da al pad una sensación de "respiración" en vez de un tono plano sostenido.
+    """
+    half = 2.0
+    chord_a = _mix(_sine(220, half, 0.5), _sine(330, half, 0.4), _sine(440, half, 0.3))
+    chord_b = _mix(_sine(196, half, 0.5), _sine(294, half, 0.4), _sine(392, half, 0.3))
+    pad = _concat(chord_a, chord_b)
+    tremolo_hz = 0.5
+    return [
+        s * (0.825 + 0.175 * math.sin(2 * math.pi * tremolo_hz * i / RATE)) * 0.22
+        for i, s in enumerate(pad)
+    ]
 
 
 AUDIO_SPECS = [
