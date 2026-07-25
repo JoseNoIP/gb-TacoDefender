@@ -281,11 +281,18 @@ const COLOR_BUTTON_TEXT_DISABLED: Color = Color(0.8, 0.78, 0.75, 0.7)
 const UI_BUTTON_CORNER_RADIUS: int = 12
 const UI_PANEL_CORNER_RADIUS: int = 12  ## igual a ModalStyleGd.CORNER_RADIUS, a propósito.
 
-const COLOR_TILE_BUILDABLE: Color = Color(0.62, 0.5, 0.32, 1.0)
-const COLOR_TILE_PATH: Color = Color(0.42, 0.32, 0.18, 1.0)
+## Path/buildable ya NO usan color plano -- Board.gd dibuja texturas tileables reales
+## (assets/sprites/board/{path,ground}_tile.png, ver tools/gen_board_tiles.py) para que
+## el camino en zigzag se vea como una calle de piedra real, no como una grilla de
+## rectángulos de color. Base/spawn siguen usando un tinte de color (son un solo tile
+## cada uno, funcionan bien como "cartel" de inicio/fin sin necesitar textura propia).
 const COLOR_TILE_BORDER: Color = Color(0.2, 0.15, 0.08, 0.6)
-const COLOR_TILE_BASE: Color = Color(0.85, 0.45, 0.15, 1.0)
-const COLOR_TILE_SPAWN: Color = Color(0.3, 0.45, 0.25, 1.0)
+const COLOR_TILE_BASE_TINT: Color = Color(0.85, 0.45, 0.15, 0.65)
+const COLOR_TILE_SPAWN_TINT: Color = Color(0.3, 0.8, 0.35, 0.55)
+## Resaltado de celdas construibles mientras hay una torre pendiente de colocar
+## (Board._pending_tower_type != "") -- verde translúcido ENCIMA de la textura de piso,
+## patrón ya visto en otros tower defense para indicar "acá podés construir".
+const COLOR_BUILD_HIGHLIGHT: Color = Color(0.3, 1.0, 0.3, 0.4)
 
 const COLOR_RANGE_INDICATOR: Color = Color(1.0, 1.0, 1.0, 0.35)
 

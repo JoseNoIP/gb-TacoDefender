@@ -30,12 +30,13 @@ BACKGROUNDS = [
     {
         "path": "assets/sprites/backgrounds/game_bg.png",
         "prompt": (
-            "empty dark wooden table texture background, plain wood plank surface, "
-            "subtle wood grain pattern, dim night ambiance, very dark brown tones, "
-            "minimal low detail, no objects, no props, mobile game background portrait, "
-            "no text, no letters"
+            "top-down view of a narrow stone alley courtyard behind a taqueria at night, "
+            "cobblestone path down the middle, small potted plants and wooden crates "
+            "along the edges, warm string lights glow softly, worn stone and dirt "
+            "textures, night ambiance, warm orange and brown tones, mobile game "
+            "background portrait, no text, no letters"
         ),
-        "seed": 4102,
+        "seed": 4201,
     },
     {
         "path": "assets/sprites/backgrounds/upgrade_bg.png",

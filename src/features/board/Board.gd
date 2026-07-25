@@ -13,6 +13,13 @@ const TOWER_SCRIPTS: Dictionary = {
 }
 const NONE_CELL: Vector2i = Vector2i(-1, -1)
 
+## Texturas tileables de piso (ver tools/gen_board_tiles.py) -- el camino en zigzag se
+## dibuja con la MISMA textura repetida celda a celda siguiendo _path_cells, así que su
+## forma real (el zigzag) es la que define dónde se ve "calle de piedra" en vez de
+## "tierra construible", en vez de un fondo escénico sin relación con la forma del camino.
+const PATH_TEXTURE: Texture2D = preload("res://assets/sprites/board/path_tile.png")
+const GROUND_TEXTURE: Texture2D = preload("res://assets/sprites/board/ground_tile.png")
+
 var _camera: Camera2D = Camera2D.new()
 var _path_cells: Dictionary = {}
 var _path_world_points: Array = []
@@ -123,6 +130,7 @@ func _on_build_mode_requested(tower_type: String) -> void:
 	_clear_selection()
 	EventBus.tower_deselected.emit()
 	_pending_tower_type = tower_type
+	queue_redraw()  ## activa el resaltado verde de celdas construibles.
 
 
 func _on_tower_upgrade_requested(cell: Vector2i) -> void:
@@ -202,6 +210,7 @@ func _handle_tap() -> void:
 		if try_place_tower(_pending_tower_type, cell):
 			_pending_tower_type = ""
 			EventBus.build_mode_cancelled.emit()
+			queue_redraw()  ## apaga el resaltado verde -- ya no hay torre pendiente.
 		return
 	if _selected_cell != NONE_CELL:
 		_clear_selection()
@@ -238,6 +247,14 @@ func _clear_selection() -> void:
 	_selected_cell = NONE_CELL
 
 
+## Cada celda dibuja PATH_TEXTURE o GROUND_TEXTURE según _path_cells -- el zigzag del
+## camino real (Constants.PATH_TURN_CELLS) es lo que determina dónde se ve la textura de
+## piedra vs la de tierra, así que la forma visual del camino coincide exactamente con
+## por dónde caminan los enemigos (no un fondo escénico fijo sin relación con la forma
+## real). Base/spawn son un tinte de color semi-transparente ENCIMA de la textura de piso
+## (siguen siendo un solo tile cada uno, funcionan como "cartel" de inicio/fin). Con una
+## torre pendiente de colocar (_pending_tower_type != ""), las celdas construibles
+## reciben además un resaltado verde translúcido encima de todo lo anterior.
 func _draw() -> void:
 	for row in range(Constants.GRID_ROWS):
 		for col in range(Constants.GRID_COLS):
@@ -246,12 +263,12 @@ func _draw() -> void:
 				Vector2(float(col), float(row)) * Constants.TILE_SIZE,
 				Vector2(Constants.TILE_SIZE, Constants.TILE_SIZE)
 			)
-			var color: Color = Constants.COLOR_TILE_BUILDABLE
+			var is_path: bool = _path_cells.has(cell)
+			draw_texture_rect(PATH_TEXTURE if is_path else GROUND_TEXTURE, rect, false)
 			if cell == Constants.PATH_TURN_CELLS[-1]:
-				color = Constants.COLOR_TILE_BASE
+				draw_rect(rect, Constants.COLOR_TILE_BASE_TINT, true)
 			elif cell == Constants.PATH_TURN_CELLS[0]:
-				color = Constants.COLOR_TILE_SPAWN
-			elif _path_cells.has(cell):
-				color = Constants.COLOR_TILE_PATH
-			draw_rect(rect, color, true)
+				draw_rect(rect, Constants.COLOR_TILE_SPAWN_TINT, true)
 			draw_rect(rect, Constants.COLOR_TILE_BORDER, false, 1.0)
+			if _pending_tower_type != "" and is_buildable(cell):
+				draw_rect(rect, Constants.COLOR_BUILD_HIGHLIGHT, true)
