@@ -338,6 +338,45 @@ Notas:
 
 ---
 
+### PASO 4B — ÍCONO DE LA APP (launcher, Android adaptive icons)
+
+Distinto de PASO 4 (íconos de power-up/UI, chicos, procedurales): el ícono que se ve al
+instalar la app es grande (512px+) y SÍ vale la pena generarlo con IA en el mismo estilo
+que el resto del arte final del juego (torres/enemigos), no con primitivas planas —
+mismo pipeline de PASO 3 (fetch + flood-fill + crop), pero con una restricción geométrica
+extra que PASO 3 no tiene: el ícono adaptativo de Android.
+
+Godot exporta 4 archivos distintos para el ícono (`export_presets.cfg`):
+
+| Campo | Tamaño | Uso |
+|---|---|---|
+| `config/icon` (project.godot) / ícono plano | 512×512, fondo sólido | Fallback, tiendas, escritorio |
+| `launcher_icons/adaptive_foreground_432x432` | 432×432, **transparente** | Capa de sujeto, Android 8+ |
+| `launcher_icons/adaptive_background_432x432` | 432×432, color sólido | Capa de fondo, Android 8+ (campo real, verificar que no esté vacío — Godot NO hereda el fondo del ícono plano) |
+| `launcher_icons/main_192x192` | 192×192 | Launchers pre-adaptive-icon (Android <8) |
+
+**La "safe zone" del adaptive icon es un CÍRCULO de 66% de diámetro, no un cuadrado.**
+Encajar el bounding box del sujeto directo a 66% dejaría sus ESQUINAS afuera del círculo
+(semi-diagonal de un cuadrado de lado 66% ≈ 0.47 del canvas, contra un radio seguro de
+0.33) — usar `fill_ratio ≈ 0.58` en su lugar. Verificar SIEMPRE recortando una máscara
+circular real sobre el compuesto antes de dar por buena la composición:
+
+```python
+from PIL import Image, ImageDraw
+composite = Image.alpha_composite(background, foreground)
+size = composite.size[0]
+mask = Image.new("L", (size, size), 0)
+ImageDraw.Draw(mask).ellipse((0, 0, size, size), fill=255)
+preview = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+preview.paste(composite, (0, 0), mask)
+preview.save("preview_circular.png")  # mirar ESTO, no el PNG cuadrado sin máscara
+```
+
+Ver `tools/fetch_taco_app_icon.py` (Taco Defender) como implementación de referencia
+completa (genera los 4 archivos de una sola corrida) y la regla CLAUDE.md #67.
+
+---
+
 ### ERRORES COMUNES Y SOLUCIONES
 
 | Error | Causa | Solución |
