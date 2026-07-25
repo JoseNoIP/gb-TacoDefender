@@ -21,9 +21,6 @@ const OUTPUT_SUBDIR: String = "probe_screenshots"
 const MainMenuGd := preload("res://src/scenes/MainMenu.gd")
 const GameGd := preload("res://src/scenes/Game.gd")
 const BoardGd := preload("res://src/features/board/Board.gd")
-const LevelSelectScreenGd := preload("res://src/scenes/LevelSelectScreen.gd")
-const GameOverScreenGd := preload("res://src/features/ui/GameOverScreen.gd")
-const VictoryScreenGd := preload("res://src/features/ui/VictoryScreen.gd")
 
 var _current: Node = null
 
@@ -34,11 +31,8 @@ func _ready() -> void:
 	print("PROBE_OUTPUT_DIR: " + output_dir)
 
 	await _capture_main_menu(output_dir)
-	await _capture_level_select(output_dir)
 	await _capture_game_initial(output_dir)
 	await _capture_game_with_towers_and_wave(output_dir)
-	await _capture_game_over_screen(output_dir)
-	await _capture_victory_screen(output_dir)
 	print("PROBE_DONE")
 	get_tree().quit()
 
@@ -56,30 +50,6 @@ func _capture_main_menu(output_dir: String) -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	await _capture(output_dir, "probe_main_menu.png")
-
-
-func _capture_level_select(output_dir: String) -> void:
-	_swap_to(LevelSelectScreenGd.new())
-	await get_tree().create_timer(0.3, true).timeout
-	await get_tree().process_frame
-	await get_tree().process_frame
-	await _capture(output_dir, "probe_level_select.png")
-
-
-func _capture_game_over_screen(output_dir: String) -> void:
-	_swap_to(GameOverScreenGd.new())
-	await get_tree().process_frame
-	EventBus.game_over.emit()
-	await get_tree().process_frame
-	await _capture(output_dir, "probe_game_over_screen.png")
-
-
-func _capture_victory_screen(output_dir: String) -> void:
-	_swap_to(VictoryScreenGd.new())
-	await get_tree().process_frame
-	EventBus.game_won.emit()
-	await get_tree().process_frame
-	await _capture(output_dir, "probe_victory_screen.png")
 
 
 func _capture_game_initial(output_dir: String) -> void:

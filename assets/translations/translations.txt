@@ -18,7 +18,6 @@
 "LABEL_MAX_LEVEL","Nivel maximo","Max level","Nível máximo","Niveau max"
 "LABEL_LEVEL","Nivel %d/%d","Level %d/%d","Nível %d/%d","Niveau %d/%d"
 "LABEL_WAVE","Oleada %d/%d","Wave %d/%d","Onda %d/%d","Vague %d/%d"
-"LABEL_WAVE_PREPARE","Oleada %d/%d — preparate","Wave %d/%d — get ready","Onda %d/%d — prepare-se","Vague %d/%d — préparez-vous"
 "LABEL_TOWER_STATS","Dano: %.0f   Rango: %.0f","Damage: %.0f   Range: %.0f","Dano: %.0f   Alcance: %.0f","Dégâts : %.0f   Portée : %.0f"
 "LABEL_TIPS","Propinas: %d","Tips: %d","Gorjetas: %d","Pourboires : %d"
 "MENU_SUBTITLE","Defiende la barra de la taqueria","Defend the taco stand","Defenda o balcão da taqueria","Défendez le comptoir du taqueria"

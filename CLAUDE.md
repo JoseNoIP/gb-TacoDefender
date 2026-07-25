@@ -279,11 +279,15 @@ Detalle completo (arquitectura, asunciones, pendientes) en `idea-base.md` — re
   del template removidas por no aplicar a este juego).
 - Sin capas de física en absoluto — targeting y AoE usan grupos (`&"enemies"`) + distancia.
 - Multi-idioma: es (default), en, pt_BR, fr — ver `/mobile-i18n` e idea-base.md.
-- **Un camino/tema por nivel:** 10 `Constants.PATH_TEMPLATES` + 10 temas visuales
-  (`tools/gen_board_tiles.py`). Una partida sigue siendo 10 oleadas con tablero FIJO — lo
-  que cambia de partida a partida es CUÁL template se usa, elegido en `Board._ready()` según
-  `MetaManager.get_victories()` (sube solo al ganar, nunca al perder). Ver idea-base.md.
-- Gates verdes: `gdlint src/ tests/` (0 errores), GUT 113/113 tests (947 asserts),
+- **Un camino/tema por nivel + nombre + selección:** 10 `Constants.PATH_TEMPLATES` + 10
+  temas visuales (`tools/gen_board_tiles.py`) + 10 nombres (`LEVEL_NAME_KEYS`, mostrados en
+  el HUD). Una partida sigue siendo 10 oleadas con tablero FIJO — lo que cambia de partida a
+  partida es CUÁL template se usa, resuelto vía `GameManager.resolve_level_index()` (pedido
+  explícito de `LevelSelectScreen`/"Siguiente Nivel", o el default según
+  `MetaManager.get_victories()` — sube solo al ganar el nivel FRONTERA, nunca al perder ni al
+  rejugar uno viejo). `LevelSelectScreen.tscn` (botón "NIVELES" en MainMenu): completado
+  (rejugable) / frontera (jugable) / bloqueado. Ver idea-base.md.
+- Gates verdes: `gdlint src/ tests/` (0 errores), GUT 123/123 tests (985 asserts),
   `--export-debug "Android"` (BUILD SUCCESSFUL, APK ~91MB).
 
 ### Señales clave en EventBus
@@ -318,7 +322,7 @@ torres y las 10 oleadas. Única fuente de verdad en código: `src/core/Constants
 |---|---|---|
 | Constants | `src/core/Constants.gd` | Constantes tipadas (GDD) — sin lógica. |
 | EventBus | `src/core/EventBus.gd` | Señales cross-feature. |
-| GameManager | `src/core/GameManager.gd` | Estado de partida: oro, vida de base, oleada, pausa. |
+| GameManager | `src/core/GameManager.gd` | Estado de partida: oro, vida de base, oleada, pausa, y qué nivel/template de camino se juega (`resolve_level_index()`/`request_level()`). |
 | SaveManager | `src/core/SaveManager.gd` | `user://save.json` — tutorial_shown, sound_enabled, language. |
 | LocalizationManager | `src/core/LocalizationManager.gd` | Parsea `assets/translations/translations.txt`, setea TranslationServer.set_locale(). Carga DESPUÉS de SaveManager. |
 | MetaManager | `src/core/MetaManager.gd` | `user://meta.json` — propinas, 5 mejoras permanentes, best_wave, victorias. |

@@ -393,15 +393,24 @@ func _current_level_name() -> String:
 	return tr(StringName(Constants.LEVEL_NAME_KEYS[index]))
 
 
-func _on_wave_started(wave_number: int) -> void:
+func _level_and_wave_text(wave_number: int) -> String:
 	var wave_text: String = tr(&"LABEL_WAVE") % [wave_number, Constants.TOTAL_WAVES]
-	_wave_label.text = "%s · %s" % [_current_level_name(), wave_text]
+	return "%s · %s" % [_current_level_name(), wave_text]
+
+
+## Ambos estados (jugando / preparando la siguiente) usan el MISMO formato corto
+## (LABEL_WAVE, sin el sufijo "— get ready" de LABEL_WAVE_PREPARE) -- con el nombre del
+## nivel también en la línea, el texto combinado completo se salía del viewport (390px)
+## en inglés/portugués antes de este fix (bug real, encontrado con el probe visual, ver
+## regla CLAUDE.md #49). El botón START WAVE (visible solo en el estado de preparación)
+## ya comunica "preparate" sin necesidad de repetirlo en texto.
+func _on_wave_started(wave_number: int) -> void:
+	_wave_label.text = _level_and_wave_text(wave_number)
 	_start_wave_button.visible = false
 
 
 func _on_wave_intermission_started(next_wave_number: int, _auto_start_delay: float) -> void:
-	var wave_text: String = tr(&"LABEL_WAVE_PREPARE") % [next_wave_number, Constants.TOTAL_WAVES]
-	_wave_label.text = "%s · %s" % [_current_level_name(), wave_text]
+	_wave_label.text = _level_and_wave_text(next_wave_number)
 	_start_wave_button.visible = true
 
 
