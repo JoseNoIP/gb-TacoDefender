@@ -1,10 +1,17 @@
 # Skill: /android-deploy
 
-Configura o repara el pipeline de CI/CD de GitHub Actions para publicar un juego Godot 4.x en Google Play Store como AAB firmado.
+Configura o repara el pipeline de CI/CD de GitHub Actions para publicar un juego Godot 4.x en Google Play Store como AAB firmado, y opcionalmente un segundo pipeline para mandar builds de prueba (debug APK) a Dropbox sin pasar por Play Console.
 
 Usa este skill cuando:
 - Estás configurando el pipeline por primera vez en un nuevo juego
 - Un paso del workflow está fallando y quieres el mapa completo de errores conocidos
+- Necesitás distribuir un build de prueba a testers rápido (Dropbox) sin tocar Play Store
+
+Al configurar esto en un juego nuevo, generar también un `DEPLOYMENT.md` en la raíz del
+proyecto (runbook con las variables YA fijadas del juego — package name, nombre del
+juego — y un checklist de qué secrets faltan crear) en vez de que el humano tenga que
+releer este skill completo cada vez. Ver `DEPLOYMENT.md` de Taco Defender como ejemplo
+de formato.
 
 ---
 
@@ -195,14 +202,57 @@ jobs:
 
 ---
 
+## Generar el keystore de release (una sola vez, para TODA la vida del juego)
+
+**Nunca regenerar ni perder este archivo** una vez publicada la primera versión — Play
+Store rechaza cualquier actualización firmada con un keystore distinto al de la subida
+original. Guardarlo en un password manager, nunca commitearlo al repo.
+
+```bash
+keytool -genkeypair -v \
+  -keystore release.keystore \
+  -alias <alias-del-juego> \
+  -keyalg RSA -keysize 2048 -validity 10000
+```
+
+Pide interactivamente: contraseña del keystore (2 veces — es `ANDROID_KEYSTORE_PASS`),
+datos de organización (cualquier valor sirve, Google no los valida), y si la contraseña
+de la key debe ser igual a la del keystore (responder que sí, simplifica a un solo
+secret). Luego, para pegarlo como secret:
+
+```bash
+base64 -i release.keystore | pbcopy   # Mac -- lo copia directo al portapapeles
+```
+
 ## GitHub Secrets requeridos
 
 | Secret | Cómo obtenerlo |
 |---|---|
-| `ANDROID_KEYSTORE_BASE64` | `base64 -i mi.keystore` (en Mac: `base64 -i mi.keystore -o -`) |
-| `ANDROID_KEYSTORE_ALIAS` | El alias que usaste al crear el keystore con `keytool` |
+| `ANDROID_KEYSTORE_BASE64` | `base64 -i release.keystore \| pbcopy` (ver arriba) |
+| `ANDROID_KEYSTORE_ALIAS` | El alias que se usó al crear el keystore con `keytool` |
 | `ANDROID_KEYSTORE_PASS` | La contraseña del keystore (y del key, si son iguales) |
-| `GOOGLE_PLAY_JSON` | Play Console → Configuración → Cuentas de servicio → JSON |
+| `GOOGLE_PLAY_JSON` | JSON completo (no base64) de una cuenta de servicio de Google Cloud con acceso a Play Console — ver subsección siguiente |
+
+### Cuenta de servicio de Google Play (para `GOOGLE_PLAY_JSON`)
+
+1. Play Console → la app → **Configuración → Acceso a la API** → vincula/crea un
+   proyecto de Google Cloud.
+2. Google Cloud Console (ese proyecto) → **IAM y administración → Cuentas de
+   servicio** → crear una cuenta nueva.
+3. Esa cuenta → pestaña **Claves** → **Agregar clave → Crear clave nueva → JSON** →
+   se descarga el archivo.
+4. Play Console → **Usuarios y permisos** → invitar el email de la cuenta de servicio
+   (termina en `.gserviceaccount.com`) → permiso de **Gestor de versiones** sobre la app.
+5. El contenido completo del `.json` descargado es el secret `GOOGLE_PLAY_JSON` (texto
+   plano, no lo codifiques en base64 — la action `r0adkll/upload-google-play` espera
+   el JSON crudo).
+
+### Primera subida — siempre manual
+
+La API de Google Play rechaza la primera subida con un error genérico si la app nunca
+tuvo ninguna versión. Correr el workflow una vez (`workflow_dispatch`), descargar el AAB
+del artefacto de CI, y subirlo a mano desde Play Console → Producción/Pruebas internas
+→ Crear nueva versión. Después de esa primera vez, el CI sube automáticamente.
 
 ---
 
@@ -298,3 +348,71 @@ El AAB queda en: `android/build/app/build/outputs/bundle/standardRelease/*.aab`
 - **Track interno:** push a `main` → Internal Testing (sin revisión de Google).
 - **Producción:** tag `v*.*.*` → Production (pasa por revisión de Google).
 - El campo que ve el usuario en la tienda es `version/name` (ej. "1.0"), no `version/code`.
+
+---
+
+## Distribución de builds de prueba vía Dropbox (opcional, sin Play Console)
+
+Segundo pipeline independiente del de Play Store — sirve para mandarle un APK debug a
+un tester en minutos, sin pasar por revisión ni tracks de Play Console. Mismo cuidado
+que la nota de "Android build template not installed" de la sección de errores: aunque
+sea un `--export-debug`, si `export_presets.cfg` ya tiene
+`gradle_build/use_gradle_build=true` (necesario para el pipeline de AAB), este workflow
+necesita los MISMOS pasos de Java 17 + `--install-android-build-template` que el de
+release — nunca una versión "simplificada".
+
+### App de Dropbox + refresh token (una sola vez)
+
+Dropbox ya no entrega tokens permanentes desde la consola web (expiran en ~4h) — hace
+falta un intercambio OAuth2 manual, una sola vez, para obtener un refresh token que no
+expira:
+
+1. [Dropbox App Console](https://www.dropbox.com/developers/apps) → **Create app** →
+   **Scoped access** → **App folder** (aísla el acceso a una sola carpeta, no todo el
+   Dropbox de la cuenta) → nombre cualquiera → **Create app**.
+2. Pestaña **Permissions** → activar `files.content.write`, `files.content.read` y
+   `sharing.write` → **Submit**.
+3. Pestaña **Settings** → copiar **App key** y **App secret**.
+4. Abrir en el navegador (reemplazando `<APP_KEY>`), aprobar el acceso, copiar el
+   código que muestra en pantalla (dura pocos minutos, usarlo enseguida):
+   ```
+   https://www.dropbox.com/oauth2/authorize?client_id=<APP_KEY>&token_access_type=offline&response_type=code
+   ```
+5. Canjear el código por los tokens:
+   ```bash
+   curl https://api.dropbox.com/oauth2/token \
+     -d code=<CÓDIGO_DEL_PASO_4> \
+     -d grant_type=authorization_code \
+     -d client_id=<APP_KEY> \
+     -d client_secret=<APP_SECRET>
+   ```
+6. El campo `"refresh_token"` de la respuesta (NO el `access_token`, ese es de corta
+   duración y no se guarda) es el secret `DROPBOX_REFRESH_TOKEN` — no expira solo, dura
+   hasta que se revoque manualmente desde el App Console.
+
+### GitHub Secrets (Dropbox)
+
+| Secret | Cómo obtenerlo |
+|---|---|
+| `DROPBOX_APP_KEY` | Paso 3 de arriba |
+| `DROPBOX_APP_SECRET` | Paso 3 de arriba |
+| `DROPBOX_REFRESH_TOKEN` | Paso 6 de arriba |
+
+### Arquitectura del workflow
+
+```
+Checkout → Java 17 → Godot + templates → Pre-heat
+→ Export APK debug (--install-android-build-template, igual que release)
+→ Canjear refresh_token por un access_token de corta duración (API de Dropbox)
+→ Subir el APK (Dropbox Content API, POST /2/files/upload)
+→ Crear link compartido (POST /2/sharing/create_shared_link_with_settings)
+→ Publicar el link en el resumen del run de GitHub Actions ($GITHUB_STEP_SUMMARY)
+```
+
+El access token se pide DENTRO del job (nunca se guarda como secret) porque dura solo
+~4 horas — el refresh token es el único secret de larga duración. El nombre de archivo
+en Dropbox incluye fecha + número de run (`autorename: true` además como red de
+seguridad) para que cada subida tenga su propio link sin colisionar con la anterior.
+
+Ver `.github/workflows/test-build-dropbox.yml` de Taco Defender como implementación de
+referencia completa.

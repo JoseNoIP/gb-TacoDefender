@@ -1,0 +1,115 @@
+name: Build Test APK → Dropbox
+
+# Solo manual por ahora (no hay rama develop/staging en este repo todavía).
+# Para automatizar en push a una rama de trabajo, agregar:
+#   push:
+#     branches: [develop]
+on:
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: "4.7"
+  EXPORT_PRESET: "Android"
+  GAME_NAME: "TacoDefender"
+  DROPBOX_FOLDER: "/builds/TacoDefender"
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # gradle_build/use_gradle_build=true en export_presets.cfg (activado para el
+      # pipeline de AAB) afecta TODOS los exports de Android, no solo el release — un
+      # --export-debug sin estos mismos pasos falla con "Android build template not
+      # installed" (ver /android-deploy, error conocido).
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Instalar Godot ${{ env.GODOT_VERSION }}
+        run: |
+          wget -q \
+            "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip" \
+            -O godot.zip
+          unzip -q godot.zip
+          mv "Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64" /usr/local/bin/godot
+          chmod +x /usr/local/bin/godot
+          rm godot.zip
+
+      - name: Instalar export templates
+        run: |
+          wget -q \
+            "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz" \
+            -O templates.tpz
+          TEMPLATES_DIR="$HOME/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable"
+          mkdir -p "$TEMPLATES_DIR"
+          unzip -q templates.tpz -d templates_tmp
+          mv templates_tmp/templates/* "$TEMPLATES_DIR/"
+          rm -rf templates_tmp templates.tpz
+
+      - name: Pre-heat Godot cache
+        run: godot --headless --editor --quit || true
+
+      - name: Exportar APK debug (firma con el debug keystore automático de Godot)
+        run: |
+          mkdir -p builds/
+          godot --headless --verbose \
+            --install-android-build-template \
+            --export-debug "${{ env.EXPORT_PRESET }}" \
+            "builds/${{ env.GAME_NAME }}-debug.apk"
+
+      # Secrets requeridos: DROPBOX_APP_KEY, DROPBOX_APP_SECRET, DROPBOX_REFRESH_TOKEN
+      # (ver DEPLOYMENT.md sección Dropbox — el refresh token no expira, el access
+      # token de esta llamada sí, dura ~4h y solo se usa dentro de este job).
+      - name: Obtener access token de Dropbox
+        id: dbx_token
+        run: |
+          RESPONSE=$(curl -s https://api.dropbox.com/oauth2/token \
+            -d grant_type=refresh_token \
+            -d refresh_token="${{ secrets.DROPBOX_REFRESH_TOKEN }}" \
+            -d client_id="${{ secrets.DROPBOX_APP_KEY }}" \
+            -d client_secret="${{ secrets.DROPBOX_APP_SECRET }}")
+          TOKEN=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Subir APK a Dropbox
+        id: dbx_upload
+        env:
+          DBX_TOKEN: ${{ steps.dbx_token.outputs.token }}
+        run: |
+          STAMP=$(date +%Y-%m-%d_%H%M)
+          DBX_PATH="${{ env.DROPBOX_FOLDER }}/${{ env.GAME_NAME }}-debug-${STAMP}-run${{ github.run_number }}.apk"
+          curl -sf -X POST https://content.dropboxapi.com/2/files/upload \
+            --header "Authorization: Bearer $DBX_TOKEN" \
+            --header "Dropbox-API-Arg: {\"path\": \"$DBX_PATH\", \"mode\": \"add\", \"autorename\": true}" \
+            --header "Content-Type: application/octet-stream" \
+            --data-binary @"builds/${{ env.GAME_NAME }}-debug.apk"
+          echo "dbx_path=$DBX_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Crear link compartido y publicarlo en el resumen del run
+        env:
+          DBX_TOKEN: ${{ steps.dbx_token.outputs.token }}
+          DBX_PATH: ${{ steps.dbx_upload.outputs.dbx_path }}
+        run: |
+          RESPONSE=$(curl -s -X POST https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings \
+            --header "Authorization: Bearer $DBX_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data "{\"path\": \"$DBX_PATH\"}")
+          URL=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['url'])")
+          {
+            echo "### 📦 APK de prueba subido a Dropbox"
+            echo ""
+            echo "$URL"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Guardar APK también como artefacto de GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-debug-${{ github.run_number }}
+          path: builds/${{ env.GAME_NAME }}-debug.apk
+          retention-days: 14

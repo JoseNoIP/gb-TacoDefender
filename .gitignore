@@ -18,3 +18,7 @@ assets/sprites/_raw_ai/
 
 # macOS
 .DS_Store
+
+# Keystore files
+*.keystore
+*.jks
