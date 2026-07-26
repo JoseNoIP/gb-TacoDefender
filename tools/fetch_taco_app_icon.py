@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """Genera el ícono real de la app (el que se ve al instalarla en el teléfono) con IA,
 en el mismo estilo "vector cartoon pulido" ya usado para torres/enemigos
-(tools/fetch_taco_object_sprites.py) -- reemplaza el taco de círculos planos generado
-proceduralmente en tools/gen_taco_icon.py, que no comparte estilo con el resto del
-arte final del juego.
+(tools/fetch_taco_object_sprites.py) -- reemplazó al taco de círculos planos generado
+proceduralmente en el ahora eliminado tools/gen_taco_icon.py, que no compartía estilo
+con el resto del arte final del juego.
 
 Concepto: un taco-mascota con un mini cañón de chile (la torre "Salsa Verde", la más
 icónica/barata del juego) montado encima, en pose de defensa -- une visualmente
 "Taco" + "Defender" en una sola imagen, en vez de un taco genérico sin relación con el
 gameplay.
 
-Genera 3 archivos (Android adaptive icons, ver /android-deploy y la búsqueda de Godot
+Genera 4 archivos (Android adaptive icons, ver /android-deploy y la búsqueda de Godot
 docs sobre launcher_icons/adaptive_*):
   assets/icon.png                     512x512 fondo sólido -- ícono plano (fallback/
                                        favicon/tiendas), reemplaza a config/icon.
@@ -19,6 +19,8 @@ docs sobre launcher_icons/adaptive_*):
                                        canvas) para no recortarse en máscaras
                                        circulares/squircle de distintos launchers.
   assets/icon_adaptive_background.png 432x432 color sólido plano (mismo naranja marca).
+  assets/icon_adaptive_monochrome.png 432x432 silueta blanca sobre transparente --
+                                       "themed icons" de Android 13+ (Material You).
   assets/icon_192.png                 192x192 -- launcher_icons/main_192x192
                                        (launchers pre-adaptive-icon, Android <8).
 
@@ -154,6 +156,20 @@ def main() -> None:
     adaptive_bg = Image.new("RGBA", (432, 432), BG_ORANGE)
     adaptive_bg.convert("RGB").save("assets/icon_adaptive_background.png", "PNG")
     print("  OK -> assets/icon_adaptive_background.png (432x432)")
+
+    # Adaptive monochrome (Android 13+, "themed icons" con Material You) -- MISMA silueta
+    # que el foreground (misma safe zone, ya verificada con máscara circular), pero
+    # rellena de blanco sólido: Android recolorea esta capa según el tema del sistema, así
+    # que el color de origen no importa, solo el canal alpha define la forma.
+    adaptive_mono = Image.new("RGBA", adaptive_fg.size, (0, 0, 0, 0))
+    fg_px = adaptive_fg.load()
+    mono_px = adaptive_mono.load()
+    for y in range(adaptive_fg.height):
+        for x in range(adaptive_fg.width):
+            alpha = fg_px[x, y][3]
+            mono_px[x, y] = (255, 255, 255, alpha)
+    adaptive_mono.save("assets/icon_adaptive_monochrome.png", "PNG")
+    print("  OK -> assets/icon_adaptive_monochrome.png (432x432, silueta blanca)")
 
     # main_192x192 -- launchers pre-adaptive-icon (Android <8).
     icon_192 = flat.resize((192, 192), Image.LANCZOS)

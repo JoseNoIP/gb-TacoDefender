@@ -16,6 +16,10 @@ var _health: float = 10.0
 var _base_speed: float = 80.0
 var _reward: int = 5
 var _visual_radius: float = 10.0
+## Solo el Escarabajo Acorazado usa esto (>0, ver Constants.ENEMY_BEETLE_ARMOR) -- 0.0
+## para los demás enemigos preserva el comportamiento exacto de take_damage() de antes
+## (sin regresión, ver test correspondiente).
+var _armor: float = 0.0
 
 var _waypoints: Array = []
 var _segment_index: int = 0
@@ -73,10 +77,17 @@ func _process(delta: float) -> void:
 	_move(delta)
 
 
+## La armadura (Escarabajo Acorazado) reduce CADA impacto individual en un monto fijo,
+## nunca por debajo de 1 de daño mínimo -- nunca lo vuelve literalmente invencible, solo
+## penaliza fuerte a golpes chicos/repetidos (mismo `take_damage()` procesa tanto el
+## disparo directo de una torre como cada tick de DoT, así que la armadura afecta a
+## ambos por igual). _armor == 0.0 (todos los demás enemigos) reproduce el comportamiento
+## exacto de antes, sin ningún cálculo de por medio.
 func take_damage(amount: float) -> void:
 	if amount <= 0.0 or _health <= 0.0:
 		return
-	_health -= amount
+	var effective_amount: float = amount if _armor <= 0.0 else maxf(1.0, amount - _armor)
+	_health -= effective_amount
 	queue_redraw()
 	if _health <= 0.0:
 		_die()

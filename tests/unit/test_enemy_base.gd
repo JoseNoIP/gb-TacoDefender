@@ -10,6 +10,7 @@ extends GutTest
 ## MISMA fórmula que EnemyBase._ready(), nunca se asume Constants.ENEMY_BASIC_HP a secas.
 
 const EnemyBasicGd := preload("res://src/features/enemies/enemy_basic.gd")
+const EnemyBeetleGd := preload("res://src/features/enemies/enemy_beetle.gd")
 
 var _enemy: Node2D = null
 
@@ -151,3 +152,34 @@ func test_apply_dot_keeps_the_longer_duration() -> void:
 	## DoT ya habría terminado acá y este segundo tick (t=1.0s) nunca pasaría.
 	var msg: String = "con la duración corta el DoT ya habría terminado antes de este tick"
 	assert_almost_eq(_enemy.get_health(), _expected_max_health() - 6.0, 0.001, msg)
+
+
+func _expected_beetle_max_health() -> float:
+	var victories: int = mini(MetaManager.get_victories(), Constants.ENEMY_VICTORY_SCALING_CAP)
+	return (
+		Constants.ENEMY_BEETLE_HP * (1.0 + float(victories) * Constants.ENEMY_HP_BONUS_PER_VICTORY)
+	)
+
+
+func test_armor_reduces_incoming_damage_by_a_flat_amount() -> void:
+	var beetle: Node2D = EnemyBeetleGd.new()
+	add_child_autofree(beetle)
+	beetle.setup([Vector2.ZERO, Vector2(100.0, 0.0)], 100.0)
+	var hit: float = Constants.ENEMY_BEETLE_ARMOR + 10.0  ## claramente mayor que la armadura.
+	beetle.take_damage(hit)
+	var expected_damage: float = hit - Constants.ENEMY_BEETLE_ARMOR
+	var msg: String = "la armadura debe restar su valor fijo del golpe, no bloquearlo entero"
+	assert_almost_eq(
+		beetle.get_health(), _expected_beetle_max_health() - expected_damage, 0.001, msg
+	)
+
+
+## La armadura nunca debe volver un golpe débil en CERO daño -- ningún enemigo debe ser
+## literalmente invencible, sea cual sea la torre usada.
+func test_armor_never_reduces_damage_below_one() -> void:
+	var beetle: Node2D = EnemyBeetleGd.new()
+	add_child_autofree(beetle)
+	beetle.setup([Vector2.ZERO, Vector2(100.0, 0.0)], 100.0)
+	beetle.take_damage(1.0)  ## mucho menor que la armadura.
+	var msg: String = "ni un golpe muy débil debe quedar en 0 daño -- nunca invencible"
+	assert_almost_eq(beetle.get_health(), _expected_beetle_max_health() - 1.0, 0.001, msg)

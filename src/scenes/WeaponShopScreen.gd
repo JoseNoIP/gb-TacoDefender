@@ -58,10 +58,27 @@ func _build_ui() -> void:
 	_tips_label.add_theme_color_override(&"font_color", Constants.COLOR_TIPS)
 	add_child(_tips_label)
 
+	## Centrado vertical DINÁMICO en el hueco disponible (entre las propinas y el botón
+	## Volver) según la cantidad real de filas -- fijar un alto reservado a mano (intento
+	## anterior: 400px, después 336px) no alcanza, porque el VBoxContainer solo ocupa su
+	## alto NATURAL de contenido (filas * alto + separaciones) sin importar qué tamaño se
+	## le asigne con set_size() -- el espacio vacío quedaba entre el contenido real y el
+	## botón Volver, no adentro del container. Con 3 torres hoy el hueco es chico; si se
+	## agregan más torres desbloqueables en el futuro, este cálculo se ajusta solo.
+	var row_count: int = Constants.TOWER_UNLOCKABLE_TYPES.size()
+	var row_height: float = 96.0
+	var row_separation: float = 14.0
+	var content_height: float = (
+		float(row_count) * row_height + float(maxi(row_count - 1, 0)) * row_separation
+	)
+	var zone_top: float = 140.0
+	var zone_bottom: float = Constants.DESIGN_HEIGHT - 76.0 - 20.0  ## margen sobre "Volver".
+	var vbox_y: float = zone_top + maxf(0.0, (zone_bottom - zone_top - content_height) * 0.5)
+
 	var vbox: VBoxContainer = VBoxContainer.new()
-	vbox.add_theme_constant_override(&"separation", 14)
-	vbox.position = Vector2(20.0, 150.0)
-	vbox.set_size(Vector2(Constants.DESIGN_WIDTH - 40.0, 400.0))
+	vbox.add_theme_constant_override(&"separation", row_separation)
+	vbox.position = Vector2(20.0, vbox_y)
+	vbox.set_size(Vector2(Constants.DESIGN_WIDTH - 40.0, content_height))
 	add_child(vbox)
 
 	for tower_type: String in Constants.TOWER_UNLOCKABLE_TYPES:

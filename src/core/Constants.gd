@@ -284,6 +284,22 @@ const ENEMY_TANK_HP: float = 220.0
 const ENEMY_TANK_SPEED: float = 30.0
 const ENEMY_TANK_REWARD: int = 25
 
+## --- Enemigo: Escarabajo Acorazado (no GDD v1.1 — agregado a pedido explícito: "un
+## enemigo nuevo... que apareciera en niveles avanzados, para dar la sensación de que el
+## juego va cambiando"). Mecanismo TÁCTICO nuevo, no solo números más grandes: ARMADURA
+## (`EnemyBase._armor`, ver `take_damage()`) reduce cada impacto individual en un monto
+## fijo (nunca por debajo de 1 de daño mínimo, para que nunca sea literalmente
+## invencible) — penaliza fuerte a las torres de daño bajo/repetido (Hielo Horchata,
+## Pico de Gallo, cada tick de Queso Fundido) y apenas afecta a las de daño alto por
+## impacto (Chile Habanero, Catapulta Guac), premiando diversificar el equipo en vez de
+## depender de un solo tipo de torre. Aparece SOLO en las oleadas 8 y 10 (las últimas del
+## GDD, ver WAVE_DEFINITIONS) — nunca en las primeras, para que su aparición se sienta
+## como progresión dentro de la propia partida, no como otro enemigo más desde el inicio.
+const ENEMY_BEETLE_HP: float = 60.0
+const ENEMY_BEETLE_SPEED: float = 55.0
+const ENEMY_BEETLE_REWARD: int = 15
+const ENEMY_BEETLE_ARMOR: float = 5.0
+
 ## Escalado de dificultad por repetición -- NO viene del GDD (que no define ningún New
 ## Game+), agregado a pedido explícito: sin esto, las 10 oleadas son IDÉNTICAS en cada
 ## partida y las 5 mejoras permanentes solo buffean al jugador (nunca a los enemigos), así
@@ -396,6 +412,7 @@ const TOWER_TYPE_PICO_GALLO: String = "pico_gallo"
 const ENEMY_TYPE_BASIC: String = "basic"
 const ENEMY_TYPE_FAST: String = "fast"
 const ENEMY_TYPE_TANK: String = "tank"
+const ENEMY_TYPE_BEETLE: String = "beetle"
 
 ## Los 3 tipos originales (GDD v1.1) — desbloqueados desde el principio, sin costo. Ver
 ## `TOWER_UNLOCKABLE_TYPES` para los 3 nuevos que sí requieren compra en la pantalla
@@ -559,6 +576,12 @@ const TOWER_CATALOG: Dictionary = {
 ## una cola de spawn. Orden de grupos = orden de aparición en el GDD (secuencial, no
 ## intercalado — decisión de diseño documentada en idea-base.md, el GDD no especifica
 ## intercalado y una cola secuencial es determinística y fácil de testear).
+##
+## "beetle" en las oleadas 8 y 10 (no GDD v1.1 — ver nota extensa junto a
+## ENEMY_BEETLE_HP) es intencional: solo en las últimas dos oleadas, nunca antes, para
+## que su aparición se sienta como progresión dentro de la propia partida. La oleada 9
+## ("Enjambre", 35 enemigos) se dejó SIN tocar a propósito — es la única oleada de puro
+## volumen de enemigos débiles del GDD, agregarle un tipo nuevo diluiría esa identidad.
 const WAVE_DEFINITIONS: Array = [
 	[{"type": "basic", "count": 5, "interval": 1.5}],
 	[{"type": "basic", "count": 8, "interval": 1.2}],
@@ -570,7 +593,11 @@ const WAVE_DEFINITIONS: Array = [
 		{"type": "basic", "count": 15, "interval": 0.5},
 		{"type": "fast", "count": 8, "interval": 0.5}
 	],
-	[{"type": "tank", "count": 4, "interval": 1.0}, {"type": "fast", "count": 10, "interval": 1.0}],
+	[
+		{"type": "tank", "count": 4, "interval": 1.0},
+		{"type": "fast", "count": 10, "interval": 1.0},
+		{"type": "beetle", "count": 6, "interval": 1.0},
+	],
 	[
 		{"type": "basic", "count": 20, "interval": 0.4},
 		{"type": "fast", "count": 15, "interval": 0.4}
@@ -579,6 +606,7 @@ const WAVE_DEFINITIONS: Array = [
 		{"type": "tank", "count": 6, "interval": 0.5},
 		{"type": "fast", "count": 15, "interval": 0.5},
 		{"type": "basic", "count": 10, "interval": 0.5},
+		{"type": "beetle", "count": 8, "interval": 0.5},
 	],
 ]
 

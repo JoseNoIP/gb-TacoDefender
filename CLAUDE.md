@@ -296,7 +296,14 @@ Detalle completo (arquitectura, asunciones, pendientes) en `idea-base.md` — re
   `LoadoutScreen.tscn` ("MI EQUIPO"), persistente entre partidas. `LoadoutManager.gd`
   (autoload nuevo, separado de MetaManager por el límite de 20 métodos públicos de
   gdlint). Ver idea-base.md.
-- Gates verdes: `gdlint src/ tests/` (0 errores), GUT 141/141 tests (1013 asserts),
+- **Enemigo nuevo (Escarabajo Acorazado):** armadura (`EnemyBase._armor`) resta un monto
+  FIJO a cada impacto (nunca invencible) — penaliza torres de daño chico/repetido, apenas
+  afecta a las de daño alto. Aparece SOLO en oleadas 8 y 10 (`WAVE_DEFINITIONS`), nunca
+  antes, para sentirse como progresión dentro de la partida. Ver idea-base.md.
+- Splash screen homologado con el resto de los juegos GuacamoleBit (branding de estudio
+  compartido, `gen_assets.py::make_splash()` del template) — ya no es específico de Taco
+  Defender. Ícono adaptativo monocromático (Android 13+) agregado.
+- Gates verdes: `gdlint src/ tests/` (0 errores), GUT 144/144 tests (1030 asserts),
   `--export-debug "Android"` (BUILD SUCCESSFUL, APK ~91MB).
 
 ### Señales clave en EventBus

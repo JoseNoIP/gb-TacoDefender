@@ -80,6 +80,13 @@ SPECS = [
         5006,
         (64, 64),
     ),
+    (
+        "assets/sprites/enemies/beetle.png",
+        "cute cartoon armored beetle insect, shiny hard rounded shell, small legs, big "
+        "cartoon eyes" + STYLE_SUFFIX,
+        5007,
+        (48, 48),
+    ),
 ]
 
 

@@ -9,6 +9,7 @@ const ENEMY_SCRIPTS: Dictionary = {
 	"basic": preload("res://src/features/enemies/enemy_basic.gd"),
 	"fast": preload("res://src/features/enemies/enemy_fast.gd"),
 	"tank": preload("res://src/features/enemies/enemy_tank.gd"),
+	"beetle": preload("res://src/features/enemies/enemy_beetle.gd"),
 }
 
 var _path_points: Array = []
