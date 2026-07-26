@@ -179,7 +179,10 @@ func _build_bottom_bar() -> void:
 	var total_width: float = 3.0 * TOWER_BUTTON_WIDTH + 2.0 * TOWER_BUTTON_GAP
 	var start_x: float = (Constants.DESIGN_WIDTH - total_width) * 0.5
 	var index: int = 0
-	for tower_type: String in Constants.TOWER_TYPES:
+	## El equipo (LoadoutManager) SIEMPRE tiene exactamente 3 torres (validado en
+	## set_current_loadout()) -- nunca Constants.TOWER_TYPES a secas, que ahora es solo
+	## "las 3 originales" y no refleja qué eligió el jugador entre las que desbloqueó.
+	for tower_type: String in LoadoutManager.get_current_loadout():
 		var data: Dictionary = Constants.TOWER_CATALOG.get(tower_type, {}) as Dictionary
 		var button: Button = Button.new()
 		button.text = ""

@@ -25,6 +25,13 @@ var _total_path_length: float = 1.0
 var _slow_multiplier: float = 1.0
 var _slow_timer: float = 0.0
 
+## DoT (Queso Fundido) -- ver apply_dot(). Independiente del slow: un enemigo puede estar
+## enlentecido Y quemándose al mismo tiempo, son efectos separados.
+var _dot_damage_per_tick: float = 0.0
+var _dot_tick_interval: float = 0.0
+var _dot_tick_timer: float = 0.0
+var _dot_time_remaining: float = 0.0
+
 var _hit_flash_tween: Tween = null
 
 
@@ -60,6 +67,9 @@ func _process(delta: float) -> void:
 		_slow_timer -= delta
 		if _slow_timer <= 0.0:
 			_slow_multiplier = 1.0
+	_process_dot(delta)
+	if _health <= 0.0:
+		return  ## el último tick de DoT recién mató al enemigo (queue_free ya en vuelo).
 	_move(delta)
 
 
@@ -93,6 +103,33 @@ func _flash_hit() -> void:
 func apply_slow(ratio: float, duration: float) -> void:
 	_slow_multiplier = minf(_slow_multiplier, 1.0 - ratio)
 	_slow_timer = maxf(_slow_timer, duration)
+
+
+## Efecto de Queso Fundido -- mismo criterio de "no stackear" que apply_slow: un segundo
+## impacto mientras el DoT anterior sigue activo se queda con el daño-por-tick MÁS ALTO y
+## el tiempo restante MÁS LARGO entre el actual y el nuevo, nunca refresca a un valor más
+## débil ni suma duraciones (evitaría que varias Queso Fundido en la misma torre apilen
+## daño sin límite contra un Tank).
+func apply_dot(damage_per_tick: float, tick_interval: float, duration: float) -> void:
+	if _dot_time_remaining <= 0.0:
+		## Recién arranca -- el primer tick pasa DESPUÉS de un intervalo completo, no en el
+		## mismo frame que el golpe inicial (ese ya lo aplica Projectile por su cuenta).
+		_dot_tick_interval = tick_interval
+		_dot_tick_timer = tick_interval
+	_dot_damage_per_tick = maxf(_dot_damage_per_tick, damage_per_tick)
+	_dot_time_remaining = maxf(_dot_time_remaining, duration)
+
+
+func _process_dot(delta: float) -> void:
+	if _dot_time_remaining <= 0.0:
+		return
+	_dot_time_remaining -= delta
+	_dot_tick_timer -= delta
+	if _dot_tick_timer <= 0.0:
+		_dot_tick_timer = _dot_tick_interval
+		take_damage(_dot_damage_per_tick)
+	if _dot_time_remaining <= 0.0:
+		_dot_damage_per_tick = 0.0
 
 
 func get_progress() -> float:

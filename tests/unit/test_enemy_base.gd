@@ -104,3 +104,50 @@ func test_get_progress_increases_after_moving() -> void:
 
 func test_get_reward_matches_constants() -> void:
 	assert_eq(_enemy.get_reward(), _expected_reward())
+
+
+## DoT (Queso Fundido, ver Constants.gd) -- deltas CHICOS en varias llamadas (como
+## corre el juego real a 60fps), nunca un delta grande de una sola vez: _process_dot()
+## solo tickea UNA vez por llamada sin importar cuánto delta se le pase (igual que
+## apply_slow ya asume deltas por-frame, no saltos grandes) -- un test con un delta
+## gigante subcontaría ticks y probaría un escenario que nunca pasa en juego real.
+func test_apply_dot_does_not_tick_before_first_interval_elapses() -> void:
+	_enemy.setup([Vector2.ZERO, Vector2(1000.0, 0.0)], 1000.0)
+	_enemy.apply_dot(4.0, 0.5, 2.0)
+	_enemy._process(0.4)
+	assert_almost_eq(_enemy.get_health(), _expected_max_health(), 0.001)
+
+
+func test_apply_dot_ticks_damage_once_per_interval() -> void:
+	_enemy.setup([Vector2.ZERO, Vector2(1000.0, 0.0)], 1000.0)
+	_enemy.apply_dot(4.0, 0.5, 2.0)
+	_enemy._process(0.3)
+	_enemy._process(0.3)  ## acumulado 0.6s -- ya pasó el primer intervalo de 0.5s.
+	assert_almost_eq(_enemy.get_health(), _expected_max_health() - 4.0, 0.001)
+
+
+## Mismo criterio que apply_slow: un segundo impacto más DÉBIL mientras el DoT anterior
+## sigue activo no debe reemplazarlo (evita que enlazar varias Queso Fundido débiles
+## "resetee" el daño de una más fuerte que ya estaba aplicada).
+func test_apply_dot_keeps_the_stronger_damage_per_tick() -> void:
+	_enemy.setup([Vector2.ZERO, Vector2(1000.0, 0.0)], 1000.0)
+	_enemy.apply_dot(10.0, 0.5, 2.0)
+	_enemy.apply_dot(2.0, 0.5, 1.0)  ## más débil, no debe reemplazar el daño mayor.
+	_enemy._process(0.3)
+	_enemy._process(0.3)
+	var msg: String = "debe quedarse con el daño-por-tick MÁS ALTO, no el último aplicado"
+	assert_almost_eq(_enemy.get_health(), _expected_max_health() - 10.0, 0.001, msg)
+
+
+func test_apply_dot_keeps_the_longer_duration() -> void:
+	_enemy.setup([Vector2.ZERO, Vector2(1000.0, 0.0)], 1000.0)
+	_enemy.apply_dot(3.0, 0.5, 0.6)  ## corto.
+	_enemy.apply_dot(3.0, 0.5, 5.0)  ## más largo -- debe quedarse con este.
+	_enemy._process(0.3)
+	_enemy._process(0.3)  ## t=0.6s: primer tick (t=0.5s) ya ocurrió.
+	assert_almost_eq(_enemy.get_health(), _expected_max_health() - 3.0, 0.001)
+	_enemy._process(0.3)
+	_enemy._process(0.3)  ## t=1.2s: si se hubiera quedado con la duración CORTA (0.6s), el
+	## DoT ya habría terminado acá y este segundo tick (t=1.0s) nunca pasaría.
+	var msg: String = "con la duración corta el DoT ya habría terminado antes de este tick"
+	assert_almost_eq(_enemy.get_health(), _expected_max_health() - 6.0, 0.001, msg)

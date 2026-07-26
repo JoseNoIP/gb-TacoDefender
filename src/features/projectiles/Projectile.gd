@@ -18,7 +18,10 @@ var _effect_params: Dictionary = {}
 
 
 ## effect_params (según _tower_type): {"slow_ratio", "slow_duration"} para Hielo Horchata,
-## {"aoe_radius"} para Catapulta Guac. Vacío para Salsa Verde (disparo único sin efecto).
+## {"aoe_radius"} para Catapulta Guac, {"dot_damage_per_tick", "dot_tick_interval",
+## "dot_duration"} para Queso Fundido. Vacío para Salsa Verde/Chile Habanero/Pico de Gallo
+## (disparo único sin efecto adicional -- Pico de Gallo logra su multi-objetivo creando
+## VARIOS proyectiles normales desde TowerBase, no con un effect_param acá).
 func launch(target: Node2D, damage: float, tower_type: String, effect_params: Dictionary) -> void:
 	_target = target
 	_damage = damage
@@ -57,6 +60,15 @@ func _impact(at_position: Vector2) -> void:
 		Constants.TOWER_TYPE_CATAPULTA_GUAC:
 			_apply_aoe(at_position, float(_effect_params.get("aoe_radius", 50.0)))
 			burst_amount = AOE_BURST_AMOUNT
+		Constants.TOWER_TYPE_QUESO_FUNDIDO:
+			if is_instance_valid(_target):
+				_target.call(&"take_damage", _damage)
+				_target.call(
+					&"apply_dot",
+					float(_effect_params.get("dot_damage_per_tick", 0.0)),
+					float(_effect_params.get("dot_tick_interval", 0.5)),
+					float(_effect_params.get("dot_duration", 0.0))
+				)
 		_:
 			if is_instance_valid(_target):
 				_target.call(&"take_damage", _damage)
@@ -70,6 +82,12 @@ func _impact_color() -> Color:
 			return Color(0.8, 0.9, 1.0, 1.0)
 		Constants.TOWER_TYPE_CATAPULTA_GUAC:
 			return Color(0.5, 0.35, 0.15, 1.0)
+		Constants.TOWER_TYPE_CHILE_HABANERO:
+			return Color(0.95, 0.25, 0.1, 1.0)
+		Constants.TOWER_TYPE_QUESO_FUNDIDO:
+			return Color(1.0, 0.82, 0.25, 1.0)
+		Constants.TOWER_TYPE_PICO_GALLO:
+			return Color(0.95, 0.45, 0.25, 1.0)
 		_:
 			return Color(0.4, 0.8, 0.3, 1.0)
 
@@ -95,6 +113,12 @@ func _build_visual() -> void:
 			texture_path = "res://assets/sprites/projectiles/hielo_horchata.png"
 		Constants.TOWER_TYPE_CATAPULTA_GUAC:
 			texture_path = "res://assets/sprites/projectiles/catapulta_guac.png"
+		Constants.TOWER_TYPE_CHILE_HABANERO:
+			texture_path = "res://assets/sprites/projectiles/chile_habanero.png"
+		Constants.TOWER_TYPE_QUESO_FUNDIDO:
+			texture_path = "res://assets/sprites/projectiles/queso_fundido.png"
+		Constants.TOWER_TYPE_PICO_GALLO:
+			texture_path = "res://assets/sprites/projectiles/pico_gallo.png"
 	var sprite: Sprite2D = Sprite2D.new()
 	sprite.texture = load(texture_path)
 	sprite.scale = Vector2(0.5, 0.5)

@@ -10,6 +10,9 @@ const TOWER_SCRIPTS: Dictionary = {
 	"salsa_verde": preload("res://src/features/towers/tower_salsa_verde.gd"),
 	"hielo_horchata": preload("res://src/features/towers/tower_hielo_horchata.gd"),
 	"catapulta_guac": preload("res://src/features/towers/tower_catapulta_guac.gd"),
+	"chile_habanero": preload("res://src/features/towers/tower_chile_habanero.gd"),
+	"queso_fundido": preload("res://src/features/towers/tower_queso_fundido.gd"),
+	"pico_gallo": preload("res://src/features/towers/tower_pico_gallo.gd"),
 }
 const NONE_CELL: Vector2i = Vector2i(-1, -1)
 

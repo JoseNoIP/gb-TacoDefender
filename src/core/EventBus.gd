@@ -55,6 +55,10 @@ signal tower_sold(cell: Vector2i, refund: int)
 signal tips_changed(new_amount: int)
 signal meta_upgrade_purchased(upgrade_id: String, new_level: int)
 
+# --- Torres desbloqueables + equipo (LoadoutManager.gd) ---
+signal tower_unlocked(tower_type: String)
+signal loadout_changed(new_loadout: Array)
+
 # --- UI genérica ---
 ## Mensaje corto tipo "toast" (ej. "Oro insuficiente", "Casilla no disponible") — evita
 ## crear una señal específica por cada mensaje de feedback posible.

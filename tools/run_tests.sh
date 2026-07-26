@@ -20,7 +20,7 @@ PROJECT_NAME=$(grep -m1 '^config/name=' project.godot | sed -E 's/config\/name="
 USER_DATA_DIR="$HOME/Library/Application Support/Godot/app_userdata/$PROJECT_NAME"
 
 # Agregar acá cada archivo user://*.json que el juego persista (ver autoloads con save()).
-JSON_FILES=("save.json" "meta.json")
+JSON_FILES=("save.json" "meta.json" "loadout.json")
 
 BACKUP_DIR=$(mktemp -d)
 

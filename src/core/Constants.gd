@@ -333,6 +333,55 @@ const TOWER_CATAPULTA_GUAC_AOE_RADIUS: float = 50.0
 const TOWER_CATAPULTA_GUAC_UPGRADE_COST: int = 80
 const TOWER_CATAPULTA_GUAC_UPGRADE_DAMAGE: float = 10.0
 
+## --- Torres desbloqueables (no GDD v1.1 — agregadas a pedido explícito: "más armas" +
+## un sistema de equipo de 3 de N compradas, con pros/contras que favorecen distintos
+## niveles). Se compran con propinas en la pantalla "Armas" (`MetaManager`); las 3 de
+## arriba están desbloqueadas desde el principio, sin costo. Cada una ejercita un
+## mecanismo TÁCTICO distinto, no solo números más grandes:
+##   Chile Habanero: francotirador -- el rango/daño por impacto más altos del juego, pero
+##     el cooldown más lento -> gran opción vs Tanks y caminos largos/abiertos (aprovecha
+##     el rango), floja contra enjambres de enemigos débiles y rápidos (bajo throughput).
+##   Queso Fundido: daño en el tiempo (DoT, ver EnemyBase.apply_dot) -- el rango MÁS CORTO
+##     del juego a cambio de daño sostenido alto -> fuerte en caminos densos/serpenteantes
+##     donde el enemigo pasa cerca varias veces, débil en caminos abiertos donde apenas
+##     entra en rango.
+##   Pico de Gallo: dispara a hasta 3 objetivos DISTINTOS a la vez (ver
+##     TowerBase._max_simultaneous_targets) -- fuerte contra oleadas de enemigos débiles
+##     dispersos en su rango (no necesitan estar agrupados como el AoE de Catapulta Guac),
+##     débil contra un solo objetivo tanque (el daño se reparte, nunca se concentra). ---
+
+# --- Torres: Chile Habanero (francotirador — reusa el mecanismo simple de disparo único
+# de Salsa Verde, ningún campo nuevo de catálogo hace falta). ---
+const TOWER_CHILE_HABANERO_COST: int = 160
+const TOWER_CHILE_HABANERO_DAMAGE: float = 30.0
+const TOWER_CHILE_HABANERO_RANGE: float = 260.0
+const TOWER_CHILE_HABANERO_COOLDOWN: float = 3.2
+const TOWER_CHILE_HABANERO_UPGRADE_COST: int = 110
+const TOWER_CHILE_HABANERO_UPGRADE_DAMAGE: float = 15.0
+const TOWER_CHILE_HABANERO_UPGRADE_RANGE: float = 20.0
+
+# --- Torres: Queso Fundido (DoT, rango corto — el upgrade SOLO extiende duración del DoT,
+# mismo patrón que Hielo Horchata con el enlentecimiento). ---
+const TOWER_QUESO_FUNDIDO_COST: int = 95
+const TOWER_QUESO_FUNDIDO_DAMAGE: float = 6.0
+const TOWER_QUESO_FUNDIDO_RANGE: float = 95.0
+const TOWER_QUESO_FUNDIDO_COOLDOWN: float = 1.2
+const TOWER_QUESO_FUNDIDO_DOT_DAMAGE_PER_TICK: float = 5.0
+const TOWER_QUESO_FUNDIDO_DOT_TICK_INTERVAL: float = 0.5
+const TOWER_QUESO_FUNDIDO_DOT_DURATION: float = 2.5
+const TOWER_QUESO_FUNDIDO_UPGRADE_COST: int = 65
+const TOWER_QUESO_FUNDIDO_UPGRADE_DOT_DURATION_RATIO: float = 0.3
+
+# --- Torres: Pico de Gallo (multi-objetivo x3 — el upgrade SOLO sube daño por objetivo,
+# igual que Salsa Verde/Catapulta Guac). ---
+const TOWER_PICO_GALLO_COST: int = 110
+const TOWER_PICO_GALLO_DAMAGE: float = 9.0
+const TOWER_PICO_GALLO_RANGE: float = 140.0
+const TOWER_PICO_GALLO_COOLDOWN: float = 1.0
+const TOWER_PICO_GALLO_MULTI_TARGET_COUNT: int = 3
+const TOWER_PICO_GALLO_UPGRADE_COST: int = 75
+const TOWER_PICO_GALLO_UPGRADE_DAMAGE: float = 4.0
+
 ## IDs de torre/enemigo — String plano (nunca StringName) como valor, mismo motivo que
 ## MetaManager de otros proyectos GuacamoleBit: no depender de que String/StringName
 ## comparen igual como key/valor en absolutamente todos los casos de uso (Dictionary,
@@ -340,19 +389,37 @@ const TOWER_CATAPULTA_GUAC_UPGRADE_DAMAGE: float = 10.0
 const TOWER_TYPE_SALSA_VERDE: String = "salsa_verde"
 const TOWER_TYPE_HIELO_HORCHATA: String = "hielo_horchata"
 const TOWER_TYPE_CATAPULTA_GUAC: String = "catapulta_guac"
+const TOWER_TYPE_CHILE_HABANERO: String = "chile_habanero"
+const TOWER_TYPE_QUESO_FUNDIDO: String = "queso_fundido"
+const TOWER_TYPE_PICO_GALLO: String = "pico_gallo"
 
 const ENEMY_TYPE_BASIC: String = "basic"
 const ENEMY_TYPE_FAST: String = "fast"
 const ENEMY_TYPE_TANK: String = "tank"
 
+## Los 3 tipos originales (GDD v1.1) — desbloqueados desde el principio, sin costo. Ver
+## `TOWER_UNLOCKABLE_TYPES` para los 3 nuevos que sí requieren compra en la pantalla
+## "Armas", y `MetaManager.get_unlocked_towers()`/`get_current_loadout()` para el sistema
+## de equipo (siempre 3 activas por partida, de las que ya se compraron).
 const TOWER_TYPES: Array = [
 	TOWER_TYPE_SALSA_VERDE, TOWER_TYPE_HIELO_HORCHATA, TOWER_TYPE_CATAPULTA_GUAC
 ]
+const TOWER_UNLOCKABLE_TYPES: Array = [
+	TOWER_TYPE_CHILE_HABANERO, TOWER_TYPE_QUESO_FUNDIDO, TOWER_TYPE_PICO_GALLO
+]
+## Costo en propinas para desbloquear cada torre nueva (mismo índice que
+## TOWER_UNLOCKABLE_TYPES) -- no confundir con "cost" del catálogo (ese es el costo en ORO
+## para construirla una vez desbloqueada, dentro de una partida).
+const TOWER_UNLOCK_COST: Dictionary = {
+	TOWER_TYPE_CHILE_HABANERO: 300,
+	TOWER_TYPE_QUESO_FUNDIDO: 250,
+	TOWER_TYPE_PICO_GALLO: 275,
+}
 
 ## Catálogo único por tipo de torre — única fuente de verdad para HUD (botones de
 ## compra/nombre), Board (chequeo de oro ANTES de instanciar la torre) y TowerBase.setup()
 ## (subtipos se configuran leyendo esto, en vez de repetir cada const individual). Campos
-## que un tipo no usa (ej. "aoe_radius" en Salsa Verde) quedan en 0.0 — nunca null, para
+## que un tipo no usa (ej. "aoe_radius" en Salsa Verde) quedan en 0.0/1 — nunca null, para
 ## no forzar checks de null en el código que los lee.
 ## "name" es una KEY de traducción (ver /mobile-i18n, assets/translations/translations.txt),
 ## no texto de display — quien lo consuma debe envolverlo en tr(), nunca mostrarlo directo.
@@ -370,6 +437,11 @@ const TOWER_CATALOG: Dictionary = {
 		"slow_duration": 0.0,
 		"upgrade_slow_duration_ratio": 0.0,
 		"aoe_radius": 0.0,
+		"multi_target_count": 1,
+		"dot_damage_per_tick": 0.0,
+		"dot_tick_interval": 0.0,
+		"dot_duration": 0.0,
+		"upgrade_dot_duration_ratio": 0.0,
 	},
 	TOWER_TYPE_HIELO_HORCHATA:
 	{
@@ -384,6 +456,11 @@ const TOWER_CATALOG: Dictionary = {
 		"slow_duration": TOWER_HIELO_HORCHATA_SLOW_DURATION,
 		"upgrade_slow_duration_ratio": TOWER_HIELO_HORCHATA_UPGRADE_SLOW_DURATION_RATIO,
 		"aoe_radius": 0.0,
+		"multi_target_count": 1,
+		"dot_damage_per_tick": 0.0,
+		"dot_tick_interval": 0.0,
+		"dot_duration": 0.0,
+		"upgrade_dot_duration_ratio": 0.0,
 	},
 	TOWER_TYPE_CATAPULTA_GUAC:
 	{
@@ -398,6 +475,68 @@ const TOWER_CATALOG: Dictionary = {
 		"slow_duration": 0.0,
 		"upgrade_slow_duration_ratio": 0.0,
 		"aoe_radius": TOWER_CATAPULTA_GUAC_AOE_RADIUS,
+		"multi_target_count": 1,
+		"dot_damage_per_tick": 0.0,
+		"dot_tick_interval": 0.0,
+		"dot_duration": 0.0,
+		"upgrade_dot_duration_ratio": 0.0,
+	},
+	TOWER_TYPE_CHILE_HABANERO:
+	{
+		"name": "TOWER_NAME_CHILE_HABANERO",
+		"cost": TOWER_CHILE_HABANERO_COST,
+		"damage": TOWER_CHILE_HABANERO_DAMAGE,
+		"range": TOWER_CHILE_HABANERO_RANGE,
+		"cooldown": TOWER_CHILE_HABANERO_COOLDOWN,
+		"upgrade_cost": TOWER_CHILE_HABANERO_UPGRADE_COST,
+		"upgrade_damage": TOWER_CHILE_HABANERO_UPGRADE_DAMAGE,
+		"upgrade_range": TOWER_CHILE_HABANERO_UPGRADE_RANGE,
+		"slow_duration": 0.0,
+		"upgrade_slow_duration_ratio": 0.0,
+		"aoe_radius": 0.0,
+		"multi_target_count": 1,
+		"dot_damage_per_tick": 0.0,
+		"dot_tick_interval": 0.0,
+		"dot_duration": 0.0,
+		"upgrade_dot_duration_ratio": 0.0,
+	},
+	TOWER_TYPE_QUESO_FUNDIDO:
+	{
+		"name": "TOWER_NAME_QUESO_FUNDIDO",
+		"cost": TOWER_QUESO_FUNDIDO_COST,
+		"damage": TOWER_QUESO_FUNDIDO_DAMAGE,
+		"range": TOWER_QUESO_FUNDIDO_RANGE,
+		"cooldown": TOWER_QUESO_FUNDIDO_COOLDOWN,
+		"upgrade_cost": TOWER_QUESO_FUNDIDO_UPGRADE_COST,
+		"upgrade_damage": 0.0,
+		"upgrade_range": 0.0,
+		"slow_duration": 0.0,
+		"upgrade_slow_duration_ratio": 0.0,
+		"aoe_radius": 0.0,
+		"multi_target_count": 1,
+		"dot_damage_per_tick": TOWER_QUESO_FUNDIDO_DOT_DAMAGE_PER_TICK,
+		"dot_tick_interval": TOWER_QUESO_FUNDIDO_DOT_TICK_INTERVAL,
+		"dot_duration": TOWER_QUESO_FUNDIDO_DOT_DURATION,
+		"upgrade_dot_duration_ratio": TOWER_QUESO_FUNDIDO_UPGRADE_DOT_DURATION_RATIO,
+	},
+	TOWER_TYPE_PICO_GALLO:
+	{
+		"name": "TOWER_NAME_PICO_GALLO",
+		"cost": TOWER_PICO_GALLO_COST,
+		"damage": TOWER_PICO_GALLO_DAMAGE,
+		"range": TOWER_PICO_GALLO_RANGE,
+		"cooldown": TOWER_PICO_GALLO_COOLDOWN,
+		"upgrade_cost": TOWER_PICO_GALLO_UPGRADE_COST,
+		"upgrade_damage": TOWER_PICO_GALLO_UPGRADE_DAMAGE,
+		"upgrade_range": 0.0,
+		"slow_duration": 0.0,
+		"upgrade_slow_duration_ratio": 0.0,
+		"aoe_radius": 0.0,
+		"multi_target_count": TOWER_PICO_GALLO_MULTI_TARGET_COUNT,
+		"dot_damage_per_tick": 0.0,
+		"dot_tick_interval": 0.0,
+		"dot_duration": 0.0,
+		"upgrade_dot_duration_ratio": 0.0,
 	},
 }
 

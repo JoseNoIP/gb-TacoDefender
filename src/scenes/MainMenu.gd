@@ -15,6 +15,8 @@ extends Control
 const GAME_SCENE: String = "res://src/scenes/Game.tscn"
 const UPGRADE_SCREEN_SCENE: String = "res://src/scenes/UpgradeScreen.tscn"
 const LEVEL_SELECT_SCENE: String = "res://src/scenes/LevelSelectScreen.tscn"
+const WEAPON_SHOP_SCENE: String = "res://src/scenes/WeaponShopScreen.tscn"
+const LOADOUT_SCENE: String = "res://src/scenes/LoadoutScreen.tscn"
 const LANGUAGE_SELECT_SCENE: String = "res://src/scenes/LanguageSelectScreen.tscn"
 const SettingsScreenGd := preload("res://src/features/ui/SettingsScreen.gd")
 const BackgroundStyleGd := preload("res://src/shared/background_style.gd")
@@ -83,9 +85,9 @@ func _build_ui() -> void:
 	_on_tips_changed(MetaManager.get_tips())
 
 	var vbox: VBoxContainer = VBoxContainer.new()
-	vbox.add_theme_constant_override(&"separation", 16)
-	vbox.position = Vector2((Constants.DESIGN_WIDTH - 220.0) * 0.5, 380.0)
-	vbox.set_size(Vector2(220.0, 280.0))
+	vbox.add_theme_constant_override(&"separation", 14)
+	vbox.position = Vector2((Constants.DESIGN_WIDTH - 220.0) * 0.5, 344.0)
+	vbox.set_size(Vector2(220.0, 420.0))
 	add_child(vbox)
 
 	var play_button: Button = Button.new()
@@ -101,6 +103,20 @@ func _build_ui() -> void:
 	levels_button.pressed.connect(_on_levels_pressed)
 	ButtonSoundGd.attach(levels_button)
 	vbox.add_child(levels_button)
+
+	var weapon_shop_button: Button = Button.new()
+	weapon_shop_button.text = "BTN_WEAPON_SHOP"
+	weapon_shop_button.custom_minimum_size = Vector2(0.0, 52.0)
+	weapon_shop_button.pressed.connect(_on_weapon_shop_pressed)
+	ButtonSoundGd.attach(weapon_shop_button)
+	vbox.add_child(weapon_shop_button)
+
+	var loadout_button: Button = Button.new()
+	loadout_button.text = "BTN_LOADOUT"
+	loadout_button.custom_minimum_size = Vector2(0.0, 52.0)
+	loadout_button.pressed.connect(_on_loadout_pressed)
+	ButtonSoundGd.attach(loadout_button)
+	vbox.add_child(loadout_button)
 
 	var upgrades_button: Button = Button.new()
 	upgrades_button.text = "BTN_UPGRADES"
@@ -142,6 +158,14 @@ func _on_play_pressed() -> void:
 
 func _on_levels_pressed() -> void:
 	get_tree().change_scene_to_file.call_deferred(LEVEL_SELECT_SCENE)
+
+
+func _on_weapon_shop_pressed() -> void:
+	get_tree().change_scene_to_file.call_deferred(WEAPON_SHOP_SCENE)
+
+
+func _on_loadout_pressed() -> void:
+	get_tree().change_scene_to_file.call_deferred(LOADOUT_SCENE)
 
 
 func _on_upgrades_pressed() -> void:

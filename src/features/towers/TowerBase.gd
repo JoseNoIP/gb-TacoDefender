@@ -27,6 +27,15 @@ var _upgrade_range_bonus: float = 0.0
 ## ralentización, nunca daño/rango — a diferencia de las otras dos torres).
 var _base_slow_duration: float = 0.0
 var _upgrade_slow_duration_ratio: float = 0.0
+## Solo Queso Fundido usa estos dos (mismo patrón que el slow de arriba, pero para DoT).
+var _base_dot_duration: float = 0.0
+var _upgrade_dot_duration_ratio: float = 0.0
+var _dot_damage_per_tick: float = 0.0
+var _dot_tick_interval: float = 0.0
+## Solo Pico de Gallo usa esto (>1) -- dispara a hasta N objetivos DISTINTOS en el mismo
+## ciclo de cooldown en vez de uno solo. 1 para las demás torres, sin cambiar su
+## comportamiento (regla de generalización sin regresión).
+var _max_simultaneous_targets: int = 1
 
 var _cooldown_timer: float = 0.0
 var _selected: bool = false
@@ -51,6 +60,11 @@ func _configure_from_catalog(tower_type: String) -> void:
 	_upgrade_range_bonus = float(data.get("upgrade_range", 0.0))
 	_base_slow_duration = float(data.get("slow_duration", 0.0))
 	_upgrade_slow_duration_ratio = float(data.get("upgrade_slow_duration_ratio", 0.0))
+	_base_dot_duration = float(data.get("dot_duration", 0.0))
+	_upgrade_dot_duration_ratio = float(data.get("upgrade_dot_duration_ratio", 0.0))
+	_dot_damage_per_tick = float(data.get("dot_damage_per_tick", 0.0))
+	_dot_tick_interval = float(data.get("dot_tick_interval", 0.0))
+	_max_simultaneous_targets = int(data.get("multi_target_count", 1))
 
 
 ## Llamado por Board justo después de add_child() (mismo orden que EnemyBase.setup()).
@@ -65,10 +79,12 @@ func _process(delta: float) -> void:
 	if _cooldown_timer > 0.0:
 		_cooldown_timer -= delta
 		return
-	var target: Node2D = _find_target()
-	if target != null:
+	var targets: Array = _find_targets(_max_simultaneous_targets)
+	if targets.is_empty():
+		return
+	for target: Node2D in targets:
 		_fire_at(target)
-		_cooldown_timer = get_effective_cooldown()
+	_cooldown_timer = get_effective_cooldown()
 
 
 func get_effective_damage() -> float:
@@ -90,6 +106,10 @@ func get_effective_cooldown() -> float:
 
 func get_effective_slow_duration() -> float:
 	return _base_slow_duration * (1.0 + float(_level - 1) * _upgrade_slow_duration_ratio)
+
+
+func get_effective_dot_duration() -> float:
+	return _base_dot_duration * (1.0 + float(_level - 1) * _upgrade_dot_duration_ratio)
 
 
 ## false si ya está al nivel máximo o si no alcanza el oro — nunca cobra sin subir de
@@ -130,9 +150,12 @@ func set_selected(value: bool) -> void:
 	queue_redraw()
 
 
-func _find_target() -> Node2D:
-	var best: Node2D = null
-	var best_progress: float = -1.0
+## Devuelve hasta `count` enemigos en rango, priorizados por "First" (GDD sección 3 — el
+## de MAYOR get_progress(), o sea el más cerca del final del camino), de mayor a menor.
+## count=1 (todas las torres salvo Pico de Gallo) reproduce EXACTO el comportamiento
+## anterior de _find_target() -- ninguna regresión para las torres existentes.
+func _find_targets(count: int) -> Array:
+	var candidates: Array = []
 	var range_sq: float = get_effective_range() * get_effective_range()
 	for node in get_tree().get_nodes_in_group(&"enemies"):
 		if not is_instance_valid(node):
@@ -142,11 +165,12 @@ func _find_target() -> Node2D:
 			continue
 		if global_position.distance_squared_to(enemy.global_position) > range_sq:
 			continue
-		var progress: float = float(enemy.call(&"get_progress"))
-		if progress > best_progress:
-			best_progress = progress
-			best = enemy
-	return best
+		candidates.append(enemy)
+	candidates.sort_custom(
+		func(a: Node2D, b: Node2D) -> bool:
+			return float(a.call(&"get_progress")) > float(b.call(&"get_progress"))
+	)
+	return candidates.slice(0, count)
 
 
 func _fire_at(target: Node2D) -> void:
@@ -159,6 +183,10 @@ func _fire_at(target: Node2D) -> void:
 		effect_params["slow_duration"] = get_effective_slow_duration()
 	elif _tower_type == Constants.TOWER_TYPE_CATAPULTA_GUAC:
 		effect_params["aoe_radius"] = Constants.TOWER_CATAPULTA_GUAC_AOE_RADIUS
+	elif _tower_type == Constants.TOWER_TYPE_QUESO_FUNDIDO:
+		effect_params["dot_damage_per_tick"] = _dot_damage_per_tick
+		effect_params["dot_tick_interval"] = _dot_tick_interval
+		effect_params["dot_duration"] = get_effective_dot_duration()
 	projectile.call(&"launch", target, get_effective_damage(), _tower_type, effect_params)
 
 

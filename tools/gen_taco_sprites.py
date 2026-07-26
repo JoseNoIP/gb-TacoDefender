@@ -65,10 +65,59 @@ def make_projectile_catapulta_guac(size=24):
     return _flat(g)
 
 
+def make_projectile_chile_habanero(size=24):
+    """Forma alargada tipo llama (rombo), no un círculo perfecto -- se ve más "de
+    impacto ardiente" que una bala redonda genérica."""
+    color = (217, 60, 25, 255)
+    g = _grid(size, size)
+    cx, cy = size // 2, size // 2
+    r = size // 2 - 1
+    _poly(
+        g,
+        [
+            (cx, cy - r),
+            (cx + int(r * 0.6), cy),
+            (cx, cy + r),
+            (cx - int(r * 0.6), cy),
+        ],
+        color,
+    )
+    _circle(g, cx, cy - r // 3, max(1, r // 4), (255, 200, 80, 255))
+    return _flat(g)
+
+
+def make_projectile_queso_fundido(size=24):
+    """Círculo principal + una gota más chica colgando debajo -- sugiere queso goteando."""
+    color = (240, 190, 60, 255)
+    g = _grid(size, size)
+    cx, cy = size // 2, size // 2
+    r = size // 2 - 1
+    _circle(g, cx, cy, r, color)
+    _circle(g, cx, cy + r // 2, max(1, r // 3), color)
+    _circle(g, cx - r // 3, cy - r // 3, max(1, r // 5), (255, 235, 180, 255))
+    return _flat(g)
+
+
+def make_projectile_pico_gallo(size=24):
+    """Base tomate + 2 puntos (cebolla blanca, cilantro verde) -- lee como salsa picada
+    sin necesitar más detalle a 24px."""
+    base = (196, 62, 48, 255)
+    g = _grid(size, size)
+    cx, cy = size // 2, size // 2
+    r = size // 2 - 1
+    _circle(g, cx, cy, r, base)
+    _circle(g, cx - r // 3, cy - r // 4, max(1, r // 5), (255, 255, 255, 255))
+    _circle(g, cx + r // 3, cy + r // 4, max(1, r // 5), (94, 158, 58, 255))
+    return _flat(g)
+
+
 PROJECTILE_SPECS = [
     ("assets/sprites/projectiles/salsa_verde.png", make_projectile_salsa_verde, 24),
     ("assets/sprites/projectiles/hielo_horchata.png", make_projectile_hielo_horchata, 24),
     ("assets/sprites/projectiles/catapulta_guac.png", make_projectile_catapulta_guac, 24),
+    ("assets/sprites/projectiles/chile_habanero.png", make_projectile_chile_habanero, 24),
+    ("assets/sprites/projectiles/queso_fundido.png", make_projectile_queso_fundido, 24),
+    ("assets/sprites/projectiles/pico_gallo.png", make_projectile_pico_gallo, 24),
 ]
 
 

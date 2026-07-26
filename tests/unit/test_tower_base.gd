@@ -9,6 +9,8 @@ extends GutTest
 
 const TowerSalsaVerdeGd := preload("res://src/features/towers/tower_salsa_verde.gd")
 const TowerHieloHorchataGd := preload("res://src/features/towers/tower_hielo_horchata.gd")
+const TowerPicoGalloGd := preload("res://src/features/towers/tower_pico_gallo.gd")
+const EnemyBasicGd := preload("res://src/features/enemies/enemy_basic.gd")
 const UpgradeShopGd := preload("res://src/features/meta/upgrade_shop.gd")
 
 var _tower: Node2D = null
@@ -85,6 +87,50 @@ func test_sell_value_increases_after_upgrade() -> void:
 	var sell_before: int = _tower.get_sell_value()
 	_tower.upgrade()
 	assert_gt(_tower.get_sell_value(), sell_before)
+
+
+func _spawn_enemy_at(world_position: Vector2) -> Node2D:
+	var enemy: Node2D = EnemyBasicGd.new()
+	add_child_autofree(enemy)
+	enemy.setup([world_position, world_position + Vector2(100.0, 0.0)], 100.0)
+	return enemy
+
+
+## Pico de Gallo es la ÚNICA torre con multi_target_count > 1 -- todas las demás (Salsa
+## Verde acá) deben seguir disparando a lo sumo a UN objetivo, exactamente como antes de
+## generalizar _find_target() -> _find_targets() (regla de "sin regresión").
+func test_default_tower_never_targets_more_than_one_enemy() -> void:
+	_spawn_enemy_at(_tower.global_position + Vector2(10.0, 0.0))
+	_spawn_enemy_at(_tower.global_position + Vector2(20.0, 0.0))
+	_spawn_enemy_at(_tower.global_position + Vector2(30.0, 0.0))
+	var targets: Array = _tower.call(&"_find_targets", 1)
+	var msg: String = "Salsa Verde (multi_target_count=1) nunca debe disparar a más de un objetivo"
+	assert_eq(targets.size(), 1, msg)
+
+
+func test_pico_gallo_targets_up_to_three_distinct_enemies() -> void:
+	var pico: Node2D = TowerPicoGalloGd.new()
+	add_child_autofree(pico)
+	pico.setup(Vector2i(2, 2))
+	_spawn_enemy_at(pico.global_position + Vector2(10.0, 0.0))
+	_spawn_enemy_at(pico.global_position + Vector2(20.0, 0.0))
+	_spawn_enemy_at(pico.global_position + Vector2(30.0, 0.0))
+	_spawn_enemy_at(pico.global_position + Vector2(40.0, 0.0))
+	var targets: Array = pico.call(&"_find_targets", 3)
+	assert_eq(targets.size(), 3, "debe topar en 3 aunque haya 4 enemigos en rango")
+	var unique: Dictionary = {}
+	for target: Node2D in targets:
+		unique[target.get_instance_id()] = true
+	assert_eq(unique.size(), 3, "los 3 objetivos deben ser enemigos DISTINTOS")
+
+
+func test_pico_gallo_targets_fewer_if_fewer_enemies_in_range() -> void:
+	var pico: Node2D = TowerPicoGalloGd.new()
+	add_child_autofree(pico)
+	pico.setup(Vector2i(2, 2))
+	_spawn_enemy_at(pico.global_position + Vector2(10.0, 0.0))
+	var targets: Array = pico.call(&"_find_targets", 3)
+	assert_eq(targets.size(), 1)
 
 
 ## GDD sección 3: el upgrade de Hielo Horchata SOLO extiende la duración del
