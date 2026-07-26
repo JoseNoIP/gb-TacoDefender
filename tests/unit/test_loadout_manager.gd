@@ -80,6 +80,11 @@ func test_unlock_tower_succeeds_and_spends_tips_when_affordable() -> void:
 func test_unlock_tower_fails_if_already_unlocked() -> void:
 	var original_loadout: Dictionary = _backup_loadout_data()
 	var original_tips: int = _backup_tips()
+	## Sin este reset, este test dependía de que UNLOCKABLE NO estuviera ya desbloqueada en
+	## el save real -- rompió en la práctica apenas el jugador la desbloqueó jugando de
+	## verdad (regla CLAUDE.md #57/#66: nunca asumir el estado real de progreso).
+	var data: Dictionary = LoadoutManager.get(&"_data")
+	data["unlocked_towers"] = []
 	var tips_data: Dictionary = MetaManager.get(&"_data")
 	tips_data["tips"] = 100000
 

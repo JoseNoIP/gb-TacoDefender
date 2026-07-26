@@ -410,10 +410,24 @@ const TOWER_UNLOCKABLE_TYPES: Array = [
 ## Costo en propinas para desbloquear cada torre nueva (mismo índice que
 ## TOWER_UNLOCKABLE_TYPES) -- no confundir con "cost" del catálogo (ese es el costo en ORO
 ## para construirla una vez desbloqueada, dentro de una partida).
+##
+## Ajustado (sesión posterior) tras feedback explícito de que se sentía "muy fácil"
+## conseguirlas -- confirmado con el save real: 1390 propinas acumuladas alcanzaban para
+## las 3 juntas (825 = 300+250+275) de una sola vez, sin ninguna fricción. Una victoria
+## completa da ~150 propinas (10/oleada * 10 + 50 de bono, sin bonos de eficiencia/mejora
+## de propinas) -- a los precios viejos, CUALQUIERA de las 3 costaba menos de 2 victorias.
+## Comparado contra el propio META_UPGRADE_COSTS ([100, 250, 500, 1000, 2000] por nivel de
+## CUALQUIER mejora permanente), desbloquear una torre entera nueva -- mucho más
+## transformador que un +5%/nivel de una estadística -- costaba MENOS que subir una sola
+## mejora a nivel 3 (500). Los nuevos precios posicionan cada torre como una inversión
+## de varias victorias (3-5), en línea con el nivel 3-4 de una mejora permanente, no el
+## nivel 1-2. Precio relativo entre las 3: Chile Habanero es la más versátil (rango más
+## largo del juego, cubre más tablero por torre) y la más cara; Queso Fundido es la más
+## situacional (solo rinde en caminos densos) y la más barata.
 const TOWER_UNLOCK_COST: Dictionary = {
-	TOWER_TYPE_CHILE_HABANERO: 300,
-	TOWER_TYPE_QUESO_FUNDIDO: 250,
-	TOWER_TYPE_PICO_GALLO: 275,
+	TOWER_TYPE_CHILE_HABANERO: 700,
+	TOWER_TYPE_QUESO_FUNDIDO: 500,
+	TOWER_TYPE_PICO_GALLO: 600,
 }
 
 ## Catálogo único por tipo de torre — única fuente de verdad para HUD (botones de
