@@ -44,6 +44,7 @@ var _hp_hearts: Array = []  ## TextureRect por vida máxima -- ver _rebuild_hp_h
 var _hp_hearts_max: int = -1  ## -1 = todavía no se construyó ninguna fila.
 var _pause_button: Button = Button.new()
 var _start_wave_button: Button = Button.new()
+var _tower_buttons: Dictionary = {}  ## tower_type -> Button, ver _on_gold_changed().
 var _toast_label: Label = Label.new()
 var _toast_timer: float = 0.0
 var _toast_rest_position: Vector2 = Vector2.ZERO
@@ -212,6 +213,7 @@ func _build_bottom_bar() -> void:
 		)
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		button.add_child(label)
+		_tower_buttons[tower_type] = button
 		index += 1
 
 
@@ -344,6 +346,14 @@ func _style_label(label: Label, color: Color) -> void:
 
 func _on_gold_changed(new_amount: int) -> void:
 	_gold_label.text = "$%d" % new_amount
+	## Reusa el estilo "disabled" ya definido en el theme del juego (ver
+	## tools/build_game_theme.gd) -- ninguna torre queda literalmente bloqueada, solo
+	## visualmente atenuada; Board.try_place_tower() sigue validando el oro en el momento
+	## real de construir (puede haberse gastado entre seleccionar y colocar).
+	for tower_type: String in _tower_buttons.keys():
+		var button: Button = _tower_buttons[tower_type]
+		var cost: int = int(Constants.TOWER_CATALOG.get(tower_type, {}).get("cost", 0))
+		button.disabled = cost > new_amount
 
 
 ## Un corazón por vida máxima (en vez de un ícono único + texto "3/3") -- el jugador

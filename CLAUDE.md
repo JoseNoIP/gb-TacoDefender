@@ -303,7 +303,11 @@ Detalle completo (arquitectura, asunciones, pendientes) en `idea-base.md` — re
 - Splash screen homologado con el resto de los juegos GuacamoleBit (branding de estudio
   compartido, `gen_assets.py::make_splash()` del template) — ya no es específico de Taco
   Defender. Ícono adaptativo monocromático (Android 13+) agregado.
-- Gates verdes: `gdlint src/ tests/` (0 errores), GUT 144/144 tests (1030 asserts),
+- Botones de compra de torre en el HUD se atenúan (y dejan de responder al tap) cuando el
+  oro actual no alcanza su costo, actualizado en vivo con cada `gold_changed` — reusa el
+  estilo "disabled" ya definido en el theme del juego, sin arte/estilo nuevo. Ver
+  idea-base.md.
+- Gates verdes: `gdlint src/ tests/` (0 errores), GUT 147/147 tests (1034 asserts),
   `--export-debug "Android"` (BUILD SUCCESSFUL, APK ~91MB).
 
 ### Señales clave en EventBus

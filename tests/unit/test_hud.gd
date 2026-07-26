@@ -107,3 +107,38 @@ func test_action_feedback_shows_toast_with_message() -> void:
 	var toast: Label = _hud.get(&"_toast_label")
 	assert_true(toast.visible)
 	assert_eq(toast.text, "Oro insuficiente")
+
+
+## No se hardcodea un tower_type especifico -- el equipo activo (LoadoutManager) es
+## persistencia real del jugador (regla CLAUDE.md #57) y puede no incluir siempre las
+## mismas 3 torres. Se toma la primera del equipo actual y su costo real del catalogo.
+func _first_loadout_tower_and_cost() -> Array:
+	var tower_type: String = (LoadoutManager.get_current_loadout() as Array)[0]
+	var cost: int = int(Constants.TOWER_CATALOG.get(tower_type, {}).get("cost", 0))
+	return [tower_type, cost]
+
+
+func test_tower_button_disabled_when_gold_below_cost() -> void:
+	var tower_and_cost: Array = _first_loadout_tower_and_cost()
+	var buttons: Dictionary = _hud.get(&"_tower_buttons")
+	var button: Button = buttons[tower_and_cost[0]]
+	EventBus.gold_changed.emit(int(tower_and_cost[1]) - 1)
+	assert_true(button.disabled)
+
+
+func test_tower_button_enabled_when_gold_covers_cost() -> void:
+	var tower_and_cost: Array = _first_loadout_tower_and_cost()
+	var buttons: Dictionary = _hud.get(&"_tower_buttons")
+	var button: Button = buttons[tower_and_cost[0]]
+	EventBus.gold_changed.emit(int(tower_and_cost[1]))
+	assert_false(button.disabled)
+
+
+func test_tower_button_re_enables_when_gold_rises_again() -> void:
+	var tower_and_cost: Array = _first_loadout_tower_and_cost()
+	var buttons: Dictionary = _hud.get(&"_tower_buttons")
+	var button: Button = buttons[tower_and_cost[0]]
+	EventBus.gold_changed.emit(int(tower_and_cost[1]) - 1)
+	assert_true(button.disabled)
+	EventBus.gold_changed.emit(int(tower_and_cost[1]) + 100)
+	assert_false(button.disabled)
